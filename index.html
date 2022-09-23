@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/theme/index.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.5.0/css/xterm.css">
 	<script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script>
+    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.6.0/lib/xterm-addon-fit.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.10/index.js"></script>
@@ -44,14 +45,20 @@
             </el-header>
             <el-container>
                 <el-aside width="auto" style="text-align:center">
-                    <el-row style="margin:20px 10px">
-                        <el-button @click="run">run</el-button>
-                    </el-row>
-                    <el-row style="margin:20px 10px">
-                        <el-button disabled>stop</el-button>
-                    </el-row>
                     <el-row style="margin:30px 10px">
                         <el-switch v-model="dumpast" width=20 active-text="DumpAST"></el-switch>
+                    </el-row>
+                    <el-row style="margin:20px 10px">
+                        <el-button size="medium" type="text" @click="run">
+                            Run
+                            <i class="el-icon-caret-right"></i>
+                        </el-button>
+                    </el-row>
+                    <el-row style="margin:20px 10px">
+                        <el-button size="medium" type="text" disabled>
+                            Stop
+                            <i class="el-icon-circle-close"></i>
+                        </el-button>
                     </el-row>
                     <el-row>
                         <el-upload
@@ -60,8 +67,17 @@
                          accept=".pc"
                          :on-change="handle_change"
                          :auto-upload="false">
-                            <el-button>Upload</el-button>
+                            <el-button size="medium" type="text">
+                                Upload
+                                <i class="el-icon-upload2"></i>
+                            </el-button>
                         </el-upload>
+                    </el-row>
+                    <el-row style="margin:20px 10px">
+                        <el-button size="medium" type="text" @click="save_file">
+                            Save
+                            <i class="el-icon-download"></i>
+                        </el-button>
                     </el-row>
                     <!-- <el-menu>
                         <el-menu-item index="1" @click="run">

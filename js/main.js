@@ -44,7 +44,7 @@ var app = new Vue({
                             }
                         }],
                         [/\/\/.*$/, 'comment'],
-                        [/".*?"/, 'string'],
+                        [/'.*?'/, 'string'],
                         [/'.?'/, 'char'],
                         [/\d+/, 'number'],
                         [/[+\-*/()\[\]=<>:]/, 'operators'],
@@ -89,11 +89,11 @@ var app = new Vue({
         });
 
         this.terminal = new Terminal({
-            rendererType: "dom",
+            rendererType: 'dom',
             rows: 16,
             theme: {
-                foreground: "white",
-                background: "#696969"
+                foreground: 'white',
+                background: '#696969'
             }
         });
         this.terminal.open(this.$refs.terminal);
@@ -162,14 +162,6 @@ var app = new Vue({
                 this.terminal.write(this.prefix);
             }
         },
-        stop(){
-
-        },
-        // switch_dump() {
-        //     this.dumpast = !this.dumpast;
-        //     this.switch_type = this.dumpast ? 'el-icon-open' : 'el-icon-turn-off';
-        //     this.switch_color = this.dumpast ? '#696969' : '#909399';
-        // },
         execute_cmd() {
             if (this.cmd == 'help') {
                 this.terminal.writeln('help: show help');
@@ -209,32 +201,42 @@ var app = new Vue({
             let file_name = file.name;
             let file_type = file_name.substring(file_name.lastIndexOf('.') + 1);
             if (this.file_content) {
-                if (file_type === "pc") {
-                    // weird problem...................
-                    this.import_file(this.file_content);
+                if (file_type === 'pc') {
+                    this.import_file();
                 } 
                 else {
                     this.$message({
-                        type: "warning",
-                        message: "incorrect file type"
+                        type: 'warning',
+                        message: 'Incorrect file type'
                     });
-                    console.log('error 1');
                 }
             }
             else {
-                console.log('error 2');
                 this.$message({
-                type: "warning",
-                message: "please select a file"
+                    type: 'warning',
+                    message: 'Please select a file'
                 });
             }
         },
-        import_file(obj) {
+        import_file() {
             let _this = this;
             let reader = new FileReader();
-            reader.readAsText(obj);
+            reader.readAsText(_this.file_content);
             reader.onload = function() {
                 _this.editor.setValue(reader.result);
+            }
+        },
+        save_file() {
+            try {
+                let content = this.editor.getValue();
+                let blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+                saveAs(blob, 'pseudocode.pc');
+            }
+            catch (e) {
+                this.$message({
+                    type: 'warning',
+                    message: 'Failed to save file'
+                });
             }
         }
     }
