@@ -44,7 +44,7 @@ var app = new Vue({
                             }
                         }],
                         [/\/\/.*$/, 'comment'],
-                        [/'.*?'/, 'string'],
+                        [/".*?"/, 'string'],
                         [/'.?'/, 'char'],
                         [/\d+/, 'number'],
                         [/[+\-*/()\[\]=<>:]/, 'operators'],

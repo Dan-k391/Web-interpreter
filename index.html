@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/theme/index.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.5.0/css/xterm.css">
 	<script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script>
-    <script src="http://cdn.jsdelivr.net/g/filesaver.js"></script>
+    <script src="https://cdn.jsdelivr.net/g/filesaver.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.6.0/lib/xterm-addon-fit.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.10/index.js"></script>
@@ -30,11 +30,6 @@
             max-height: 100%;
             overflow: hidden;
         }
-
-        .options {
-            margin-bottom: 10px;
-        }
-        
     </style>
 </head>
 <body>
@@ -62,15 +57,22 @@
                     </el-row>
                     <el-row>
                         <el-upload
-                         action
-                         :multiple="false"
-                         accept=".pc"
-                         :on-change="handle_change"
-                         :auto-upload="false">
-                            <el-button size="medium" type="text">
-                                Upload
-                                <i class="el-icon-upload2"></i>
-                            </el-button>
+                        action
+                        :multiple="false"
+                        accept=".pc"
+                        :on-change="handle_change"
+                        :auto-upload="false">
+                            <el-popover
+                            placement="right"
+                            title="Aware"
+                            width="200"
+                            trigger="hover"
+                            content="Are you sure you want to open a new file? (This will cover the current file)">
+                                <el-button size="medium" type="text" slot="reference">
+                                    Upload
+                                    <i class="el-icon-upload2"></i>
+                                </el-button>
+                            </el-popover>
                         </el-upload>
                     </el-row>
                     <el-row style="margin:20px 10px">
