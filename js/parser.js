@@ -9,6 +9,7 @@ import {
     ForAST,
     VarExprAST,
     ArrExprAST,
+    CallExprAST,
     UnaryExprAST,
     BinaryExprAST,
     NumberAST,
@@ -23,7 +24,15 @@ class Parser {
     constructor(tokens) {
         this.tokens = tokens;
 
+        // the current token
         this.current = 0;
+    }
+
+    report_error(msg) {
+        let line = this.tokens[this.current]['line'];
+        let column = this.tokens[this.current]['column'];
+        let value = this.tokens[this.current]['value'];
+        throw new Error(msg + ' (line: ' + line + ', column: ' + column + ', value: ' + value + ')');
     }
 
     expect_type(type, throw_error = true) {
@@ -36,11 +45,11 @@ class Parser {
                 return current_value;
             }
             if (throw_error)
-                throw new Error("Expected token with type '" + type + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')', this.current);
+                this.report_error("Expected token with type: '" + type + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')');
             return null;
         }
         if (throw_error)
-            throw new Error("Expected token with type '" + type + "', Got end of line", this.current);
+            this.report_error("Expected token with type: '" + type + "', Got end of line");
         return null;
     }
 
@@ -54,12 +63,16 @@ class Parser {
                 return current_value;
             }
             if (throw_error)
-                throw new Error("Expected token with value: '" + value + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')', this.current);
+                this.report_error("Expected token with value: '" + value + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')');
             return null;
         }
         if (throw_error)
-            throw new Error("Expected token with value: '" + value + "', Got end of line", this.current);
+            this.report_error("Expected token with value: '" + value + "', Got end of line");
         return null;
+    }
+
+    peek_type() {
+        return this.tokens[this.current]['type'];
     }
     
     parse() {
@@ -67,36 +80,40 @@ class Parser {
         while(this.current < this.tokens.length) {
             let node = this.parse_stmt();
 
-            if (node == null) {
-                return null;
+            // if the node is not a new line node, add it to the ast body
+            if (node) {
+                ast.body.push(node);
             }
-            ast.body.push(node);
         }
         return ast;
     }
 
     parse_stmt() {
-        let current_type = this.tokens[this.current]['type'];
+        let next_type = this.peek_type();
     
-        if (current_type == 'declare') {
+        if (next_type == 'declare') {
             return this.decl();
         }
-        else if (current_type == 'identifier') {
+        else if (next_type == 'identifier') {
             return this.assign();
         }        
-        else if (current_type == 'if') {
+        else if (next_type == 'if') {
             return this.if_statement();
         }
-        else if (current_type == 'while') {
+        else if (next_type == 'while') {
             return this.while_statement();
         }
-        else if (current_type == 'for') {
+        else if (next_type == 'for') {
             return this.for_statement();
         }
-        else if (current_type == 'output') {
+        else if (next_type == 'output') {
             return this.output();
         }
-        throw new Error('Unexpected token', this.current);
+        else if (this.expect_type('newline', false)) {
+            this.current_line++;
+            return null;
+        }
+        this.report_error("Unexpected token: '" + next_type + "'");
     }
 
     parse_expr() {
@@ -185,20 +202,16 @@ class Parser {
         // preform this.current++ in the if statements for correct error msg
         let current_type = this.tokens[this.current]['type'];
         let current_value = this.tokens[this.current]['value'];
-        if (current_type == 'boolean') {
-            this.current++;
+        if (this.expect_type('boolean', false)) {
             return new BoolAST(current_value);
         }
-        else if (current_type == 'number') {
-            this.current++;
+        else if (this.expect_type('number', false)) {
             return new NumberAST(current_value);
         }
-        else if (current_type == 'string') {
-            this.current++;
+        else if (this.expect_type('string', false)) {
             return new StringAST(current_value);
         }
-        else if (current_type == 'identifier') {
-            this.current++;
+        else if (this.expect_type('identifier', false)) {
             let ex_lpar = this.expect_value('[', false);
             if (ex_lpar) {
                 let index = this.parse_expr();
@@ -207,16 +220,29 @@ class Parser {
             }
             return new VarExprAST(current_value);
         }
-        else if (current_value == '(') {
-            this.current++;
+        else if (this.expect_type('call', false)) {
+            let ex_ident = this.expect_type('identifier');
+            let ex_lpar = this.expect_value('(');
+            let args = [];
+            while (this.tokens[this.current]['value'] != ')') {
+                let arg = this.parse_expr();
+                args.push(arg);
+                let ex_comma = this.expect_value(',', false);
+                if (!ex_comma)
+                    break;
+            }
+            let ex_rpar = this.expect_value(')');
+            if (ex_ident && ex_lpar && ex_rpar)
+                return new CallExprAST(current_value, params);
+        }
+        else if (this.expect_value('(', false)) {
             let expr = this.parse_expr();
             // use expect_value to give an error if not found
             let ex_lpar = this.expect_value(')');
-            if (expr != null && ex_lpar != null)
+            if (expr && ex_lpar)
                 return expr;
-            return null;
         }
-        throw new Error('Unexpected token' + '(type: ' + current_type + ', value:' + current_value + ')', this.current);
+        this.report_error("Unexpected token: '" + current_type + "'");
     }
         
 
@@ -237,7 +263,7 @@ class Parser {
         let ex_ident = this.expect_type('identifier');
         let ex_op = this.expect_value(':');
         let ex_type = this.expect_type('type', false);
-        if (ex_declare != null && ex_ident != null && ex_op != null && ex_type != null)
+        if (ex_declare && ex_ident && ex_op && ex_type)
             return new VarDeclAST(ex_ident, ex_type);
         let ex_arr = this.expect_type('array');
         let ex_lpar = this.expect_value('[');
@@ -247,8 +273,9 @@ class Parser {
         let ex_rpar = this.expect_value(']');
         let ex_of = this.expect_type('of');
         ex_type = this.expect_type('type');
-        if (ex_declare != null && ex_ident != null && ex_op != null && ex_arr != null && ex_lpar != null && ex_lower != null && ex_op2 != null && ex_upper != null && ex_rpar != null && ex_of && ex_type != null)
+        if (ex_declare && ex_ident && ex_op && ex_arr && ex_lpar && ex_lower && ex_op2 && ex_upper && ex_rpar && ex_of && ex_type)
             return new ArrDeclAST(ex_ident, ex_type, ex_lower, ex_upper);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
     var_decl() {
@@ -263,18 +290,20 @@ class Parser {
         */
         let ex_ident = this.expect_type('identifier');
         let ex_lpar = this.expect_value('[', false);
-        if (ex_lpar != null) {
+        if (ex_lpar) {
             let ex_index = this.parse_expr();
             let ex_rpar = this.expect_value(']');
             let ex_op = this.expect_value('<-');
             let ex_expr = this.parse_expr();
-            if (ex_ident != null && ex_lpar != null && ex_index != null && ex_rpar != null && ex_op != null && ex_expr != null)
+            if (ex_ident && ex_lpar && ex_index && ex_rpar && ex_op && ex_expr)
                 return new ArrAssignAST(ex_ident, ex_index, ex_expr);
+            this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
         }
         let ex_op = this.expect_value('<-');
         let ex_expr = this.parse_expr();
-        if (ex_ident != null && ex_op != null && ex_expr != null)
+        if (ex_ident && ex_op && ex_expr)
             return new VarAssignAST(ex_ident, ex_expr);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
     variable_assignment() {
@@ -285,7 +314,7 @@ class Parser {
 
     if_statement() {
         /*
-        if_statement -> if expr then statement_list (else statement_list)? end
+        if_statement -> if expr then statement_list (else statement_list)? endif
         */
         let ex_if = this.expect_type('if');
         let ex_cond = this.parse_expr();
@@ -303,7 +332,7 @@ class Parser {
             ex_else = this.expect_type('else', false);
             ex_endif = this.expect_type('endif', false);
         }
-        if (ex_if != null && ex_cond != null && ex_then && ex_endif != null)
+        if (ex_if && ex_cond && ex_then && ex_endif)
             return new IfAST(ex_expr, ex_body);
 
         let ex_else_body = [];
@@ -316,8 +345,9 @@ class Parser {
             ex_else_body.push(node);
             ex_endif = this.expect_type('endif', false);
         }
-        if (ex_if != null && ex_cond != null && ex_then != null && ex_body != null && ex_else != null && ex_else_body && ex_endif != null)
+        if (ex_if && ex_cond && ex_then && ex_body && ex_else && ex_else_body && ex_endif)
             return new IfAST(ex_cond, ex_body, ex_else_body);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
     while_statement() {
@@ -334,8 +364,9 @@ class Parser {
             ex_body.push(node);
             ex_endwhile = this.expect_type('endwhile', false);
         }
-        if (ex_while != null && ex_expr != null && ex_body != null && ex_endwhile != null)
+        if (ex_while && ex_expr && ex_body && ex_endwhile)
             return new WhileAST(ex_expr, ex_body);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
     for_statement() {
@@ -347,7 +378,7 @@ class Parser {
         let ex_end = this.parse_expr();
         let ex_step = this.expect_type('step', false);
         let ex_step_val = null;
-        if (ex_step != null)
+        if (ex_step)
             ex_step_val = this.parse_expr();
         let ex_body = [];
         let ex_next = this.expect_type('next', false);
@@ -361,10 +392,11 @@ class Parser {
             ex_next = this.expect_type('next', false);
         }
         let ex_ident2 = this.expect_type('identifier');
-        if (ex_for != null && ex_ident != null && ex_op != null && ex_start != null && ex_to != null && ex_end != null && ex_step_val != null && ex_body != null && ex_next != null && ex_ident2 == ex_ident)
+        if (ex_for && ex_ident && ex_op && ex_start && ex_to && ex_end && ex_step_val && ex_body && ex_next && ex_ident2 == ex_ident)
             return new ForAST(ex_ident, ex_start, ex_end, ex_body, ex_step_val);
-        if (ex_for != null && ex_ident != null && ex_op != null && ex_start != null && ex_to != null && ex_end != null && ex_body != null && ex_next != null && ex_ident2 == ex_ident)
+        if (ex_for && ex_ident && ex_op && ex_start && ex_to && ex_end && ex_body && ex_next && ex_ident2 == ex_ident)
             return new ForAST(ex_ident, ex_start, ex_end, ex_body);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 }
 

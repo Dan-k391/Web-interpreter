@@ -56,8 +56,9 @@ Below are some basic examples of the syntax of the language.
 - Only supports Array with the lower boundary of 0. (e.g. `ARRAY[0:10] OF INTEGER`) ~~Personally I think it is stupid to start an array from non-zero index.~~
 
 ## Interpreter
-The interpreter is written in javascript. It is simply a tree-walk interpreter using LL(1) parsing, with a few optimizations. The interpreter is not very efficient, and is not intended for production use. It is only intended for educational purposes.
+The interpreter is written in pure front-end javascript. It is simply a tree-walk interpreter using LL(1) parsing, with a few optimizations. The interpreter is not very efficient, and is not intended for production use. It is only intended for educational purposes.
 The editor uses the monaco editor for the editing system and uses xterm.js to setup a fake terminal for the IO system.
 
 ## Contributing
 Contributions are welcome. Please open an issue or a pull request if you would like to contribute.
+(If you found any bugs or have any suggestions, you're welcome to open an issue.)

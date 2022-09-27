@@ -1,0 +1,7 @@
+class Function {
+
+}
+
+export {
+    Function
+}

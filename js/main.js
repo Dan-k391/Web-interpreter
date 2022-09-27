@@ -176,6 +176,10 @@ var app = new Vue({
                 this.terminal.clear();
                 this.terminal.write(this.prefix);
             }
+            else if (this.cmd == 'egg') {
+                this.terminal.writeln('An egg? Maybe...');
+                this.terminal.write(this.prefix);
+            }
             else {
                 this.terminal.writeln(this.cmd + ': Command not found');
                 this.terminal.write(this.prefix);
@@ -193,6 +197,7 @@ var app = new Vue({
             monaco.editor.setModelMarkers(this.editor.getModel(), 'pseudocode', this.markers);
         },
         report(err_msg) {
+            this.terminal.write('\x1b[31;1mError: \x1B[0m')
             this.terminal.writeln(err_msg);
             this.terminal.write(this.prefix);
         },

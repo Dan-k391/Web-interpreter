@@ -3,7 +3,7 @@ import { Error } from "./error.js";
 
 const WHITESPACE = /\s/;
 const NUMBERS = /[0-9]/;
-const SINGLEOPERATORS = /[+\-*/()\[\]=<>:]/;
+const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,]/;
 const DOUBLEOPERATORS = ['<-', '<=', '>=', '<>'];
 const LETTERS = /[a-z]/i;
 const BOOLEANS = ['TRUE', 'FALSE'];
@@ -24,6 +24,7 @@ class Scanner {
         for (let line of lines) {
             let tokens = this.tokenize_line(line);
             all_tokens.push(...tokens);
+            all_tokens.push({type: 'newline', value: 'newline'});
             this.current_line++;
         }
         if (all_tokens.length != 0) 
@@ -39,7 +40,7 @@ class Scanner {
 
             // if the line is a comment
             if (char == '/' && line[current + 1] == '/') {
-                return [];
+                return tokens;
             }
             else if (WHITESPACE.test(char)) {
                 current++;
@@ -47,12 +48,12 @@ class Scanner {
             }
             else if (SINGLEOPERATORS.test(char)) {
                 if (DOUBLEOPERATORS.includes(char + line[current + 1])) {
-                    tokens.push({type: 'operator', value: char + line[current + 1]});
+                    tokens.push({ type: 'operator', value: char + line[current + 1], line: this.current_line, column: current + 1 });
                     current += 2;
                     continue;
                 }
 
-                tokens.push({type: 'operator', value: char});
+                tokens.push({ type: 'operator', value: char, line: this.current_line, column: current + 1 });
                 current++;
                 continue;
             }
@@ -65,29 +66,39 @@ class Scanner {
                 }
 
                 if (TYPES.includes(value)) {
-                    tokens.push({type: 'type', value: value});
+                    tokens.push({ type: 'type', value: value, line: this.current_line, column: current + 1 });
                 }
                 else if (BOOLEANS.includes(value)) {
-                    tokens.push({type: 'boolean', value: value});
+                    tokens.push({ type: 'boolean', value: value, line: this.current_line, column: current + 1 });
                 }
                 else if (KEYWORDS.includes(value)) {
-                    tokens.push({type: value.toLowerCase(), value: value});
+                    tokens.push({ type: value.toLowerCase(), value: value, line: this.current_line, column: current + 1 });
                 }
                 else {
-                    tokens.push({type: 'identifier', value: value});
+                    tokens.push({ type: 'identifier', value: value, line: this.current_line, column: current + 1 });
                 }
                 continue;
             }
             // if the line is a number
             else if (NUMBERS.test(char)) {
                 let value = '';
+                let dot = false;
 
-                while (NUMBERS.test(char) && current < line.length) {
+                while (current < line.length) {
+                    if (char == '.') {
+                        if (dot) {
+                            throw new Error('Invalid number', this.current_line, current + 1);
+                        }
+                        dot = true;
+                    }
+                    else if (!NUMBERS.test(char)) {
+                        break;
+                    }
                     value += char;
                     char = line[++current];
                 }
 
-                tokens.push({type: 'number', value: value});
+                tokens.push({ type: 'number', value: value, line: this.current_line, column: current + 1 });
                 continue;
             }
             else if (char == '"') {
@@ -103,7 +114,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({type: 'string', value: value});
+                    tokens.push({ type: 'string', value: value, line: this.current_line, column: current + 1 });
                 }
             }
             else if (char == "'") {
@@ -122,7 +133,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({type: 'char', value: value});
+                    tokens.push({ type: 'char', value: value, line: this.current_line, column: current + 1 });
                 }
             }
             else {

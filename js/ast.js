@@ -2,11 +2,13 @@
 // TODO: Maybe improve Arrays(lower bound starts from none zero).....
 
 import { app } from './main.js';
-import { Variable, Array } from './type.js';
 import { Error } from './error.js';
+import { Variable } from './variable.js';
+import { Array } from './array.js';
+import { Function } from './function.js';
+import { Environment } from './environment.js';
 
-var named_values = {};
-var named_arrays = {};
+var env = new Environment();
 
 class ProgramAST {
     constructor() {
@@ -49,7 +51,7 @@ class VarDeclAST {
     }
 
     evaluate() {
-        named_values[this.ident] = new Variable(this.type);
+        env.values[this.ident] = new Variable(this.type);
         return;
     }
 
@@ -76,7 +78,7 @@ class ArrDeclAST {
     }
 
     evaluate() {
-        named_arrays[this.ident] = new Array(this.type, this.lower, this.upper);
+        env.arrays[this.ident] = new Array(this.type, this.lower, this.upper);
         return;
     }
 
@@ -95,9 +97,9 @@ class VarAssignAST {
 
     evaluate() {
         let value = this.expr.evaluate();
-        if (this.ident in named_values) {
-            if (typeof(value) == named_values[this.ident].type)
-                named_values[this.ident].value = value;
+        if (this.ident in env.values) {
+            if (typeof(value) == env.values[this.ident].type)
+                env.values[this.ident].value = value;
             else
                 throw new Error('Type mismatch in assignment for Variable ' + this.ident);
         }
@@ -125,10 +127,10 @@ class ArrAssignAST {
     evaluate() {
         let index = this.index.evaluate();
         let value = this.expr.evaluate();
-        if (this.ident in named_arrays) {
-            if (typeof(index) == 'number' && index >= named_arrays[this.ident].lower && index <= named_arrays[this.ident].upper) {
-                if (typeof(value) == named_arrays[this.ident].type)
-                    named_arrays[this.ident].values[index] = value;
+        if (this.ident in env.arrays) {
+            if (typeof(index) == 'number' && index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
+                if (typeof(value) == env.arrays[this.ident].type)
+                    env.arrays[this.ident].values[index] = value;
                 else
                     throw new Error('Type mismatch in assignment for Array ' + this.ident);
             }
@@ -229,7 +231,7 @@ class ForAST {
         let step = this.step.evaluate();
         if (start < end) {
             for (let i = start; i <= end && count < 50100; i += step) {
-                named_values[this.ident].value = i;
+                env.values[this.ident].value = i;
                 for (let node of this.body) {
                     node.evaluate();
                 }
@@ -254,8 +256,8 @@ class VarExprAST {
     }
 
     evaluate() {
-        if (this.ident in named_values && named_values[this.ident].value != null) 
-            return named_values[this.ident].value;
+        if (this.ident in env.values && env.values[this.ident].value != null) 
+            return env.values[this.ident].value;
         throw new Error("Variable '" + this.ident + "' is not defined");
     }
 
@@ -272,10 +274,10 @@ class ArrExprAST {
     }
 
     evaluate() {
-        if (this.ident in named_arrays && named_arrays[this.ident].values != null) {
+        if (this.ident in env.arrays && env.arrays[this.ident].values != null) {
             let index = this.index.evaluate();
-            if (index >= named_arrays[this.ident].lower && index <= named_arrays[this.ident].upper) {
-                let value = named_arrays[this.ident].values[index];
+            if (index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
+                let value = env.arrays[this.ident].values[index];
                 console.log(value);
                 return value;
             }
@@ -288,6 +290,42 @@ class ArrExprAST {
     dump(prefix) {
         app.terminal.writeln(prefix + 'ArrExprAST: ' + this.ident);
         this.index.dump(prefix + '  ');
+        return;
+    }
+}
+
+
+class CallExprAST {
+    constructor(ident, args) {
+        this.ident = ident;
+        this.args = args;
+    }
+
+    evaluate() {
+        if (this.ident in env.functions) {
+            let func = env.functions[this.ident];
+            if (func.args.length == this.args.length) {
+                let values = [];
+                for (let i = 0; i < this.args.length; i++) {
+                    let value = this.args[i].evaluate();
+                    if (value == null)
+                        return null;
+                    values.push(value);
+                }
+                return func.evaluate(values);
+            }
+            else
+                throw new Error("Function '" + this.ident + "' expects " + func.args.length + " arguments");
+        }
+        else
+            throw new Error("Function '" + this.ident + "' is not defined");
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'CallExprAST: ' + this.ident);
+        for (let node of this.args) {
+            node.dump(prefix + '  ');
+        }
         return;
     }
 }
@@ -473,6 +511,7 @@ export {
     ForAST,
     VarExprAST,
     ArrExprAST,
+    CallExprAST,
     UnaryExprAST,
     BinaryExprAST,
     NumberAST,
