@@ -15,3 +15,7 @@ Use return instead of else
 values = {}
 ```
 Use dictionaries instead of maps
+```js
+temp = { t: 9, m: 8 }
+```
+Add spaces between big braces

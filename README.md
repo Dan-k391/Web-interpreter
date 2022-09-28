@@ -2,6 +2,7 @@
 
 Provides an online web editor for CAIE Pseudocode, with syntax highlighting, and a javascript-based interpreter for the language.
 Website URL: [The web interpreter](https://ulweb.club)
+The code I written is quite low quality, so try not to go very deep into the code.
 
 ## Syntax
 Below are some basic examples of the syntax of the language.
@@ -45,6 +46,10 @@ Below are some basic examples of the syntax of the language.
     ```
     OUTPUT <Expression>
     ```
+9. Comments
+    ```
+    // This is a comment
+    ```
 
 ## Features to implement
 - [ ] Functions & Procedures
@@ -57,8 +62,8 @@ Below are some basic examples of the syntax of the language.
 
 ## Interpreter
 The interpreter is written in pure front-end javascript. It is simply a tree-walk interpreter using LL(1) parsing, with a few optimizations. The interpreter is not very efficient, and is not intended for production use. It is only intended for educational purposes.
-The editor uses the monaco editor for the editing system and uses xterm.js to setup a fake terminal for the IO system.
+The editor uses the monaco editor for the editing system and uses xterm.js to setup a fake terminal for the IO system. Element-ui is also used for layout.
 
 ## Contributing
-Contributions are welcome. Please open an issue or a pull request if you would like to contribute.
+Contributions are welcome. Please open a a pull request if you would like to contribute.
 (If you found any bugs or have any suggestions, you're welcome to open an issue.)

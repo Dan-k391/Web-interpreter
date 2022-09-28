@@ -6,19 +6,17 @@ import { Error } from './error.js';
 import { Variable } from './variable.js';
 import { Array } from './array.js';
 import { Function } from './function.js';
-import { Environment } from './environment.js';
 
-var env = new Environment();
 
 class ProgramAST {
     constructor() {
         this.body = [];
     }
 
-    evaluate() {
+    evaluate(env) {
         let result = null;
         for (let node of this.body) {
-            result = node.evaluate();
+            result = node.evaluate(env);
         }
         return result;
     }
@@ -50,8 +48,8 @@ class VarDeclAST {
         }
     }
 
-    evaluate() {
-        env.values[this.ident] = new Variable(this.type);
+    evaluate(env) {
+        env.variables[this.ident] = new Variable(this.type);
         return;
     }
 
@@ -77,7 +75,7 @@ class ArrDeclAST {
         this.upper = upper;
     }
 
-    evaluate() {
+    evaluate(env) {
         env.arrays[this.ident] = new Array(this.type, this.lower, this.upper);
         return;
     }
@@ -95,11 +93,11 @@ class VarAssignAST {
         this.expr = expr;
     }
 
-    evaluate() {
-        let value = this.expr.evaluate();
-        if (this.ident in env.values) {
-            if (typeof(value) == env.values[this.ident].type)
-                env.values[this.ident].value = value;
+    evaluate(env) {
+        let value = this.expr.evaluate(env);
+        if (this.ident in env.variables) {
+            if (typeof(value) == env.variables[this.ident].type)
+                env.variables[this.ident].value = value;
             else
                 throw new Error('Type mismatch in assignment for Variable ' + this.ident);
         }
@@ -124,9 +122,9 @@ class ArrAssignAST {
         this.expr = expr;
     }
 
-    evaluate() {
-        let index = this.index.evaluate();
-        let value = this.expr.evaluate();
+    evaluate(env) {
+        let index = this.index.evaluate(env);
+        let value = this.expr.evaluate(env);
         if (this.ident in env.arrays) {
             if (typeof(index) == 'number' && index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
                 if (typeof(value) == env.arrays[this.ident].type)
@@ -158,15 +156,15 @@ class IfAST {
         this.else_body = else_body;
     }
 
-    evaluate() {
-        if (this.condition.evaluate() == true) {
+    evaluate(env) {
+        if (this.condition.evaluate(env) == true) {
             for (let node of this.body) {
-                node.evaluate();
+                node.evaluate(env);
             }
         }
         else if (this.else_body != null) {
             for (let node of this.else_body) {
-                node.evaluate();
+                node.evaluate(env);
             }
         }
         return;
@@ -194,11 +192,11 @@ class WhileAST {
         this.body = body;
     }
 
-    evaluate() {
+    evaluate(env) {
         let count = 0;
-        while (this.condition.evaluate() == true && count < 50100) {
+        while (this.condition.evaluate(env) == true && count < 50100) {
             for (let node of this.body) {
-                node.evaluate();
+                node.evaluate(env);
             }
             count++;
         }
@@ -224,16 +222,16 @@ class ForAST {
         this.step = step;
     }
 
-    evaluate() {
+    evaluate(env) {
         let count = 0;
-        let start = this.start.evaluate();
-        let end = this.end.evaluate();
-        let step = this.step.evaluate();
+        let start = this.start.evaluate(env);
+        let end = this.end.evaluate(env);
+        let step = this.step.evaluate(env);
         if (start < end) {
             for (let i = start; i <= end && count < 50100; i += step) {
-                env.values[this.ident].value = i;
+                env.variables[this.ident].value = i;
                 for (let node of this.body) {
-                    node.evaluate();
+                    node.evaluate(env);
                 }
                 count++;
             }
@@ -243,7 +241,7 @@ class ForAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'ForAST');
-        app.terminal.writeln(prefix + '  ' + this.ident + ' = ' + this.start.evaluate() + ' to ' + this.end.evaluate() + ' step ' + this.step.evaluate());
+        app.terminal.writeln(prefix + '  ' + this.ident + ' = ' + this.start.evaluate(env) + ' to ' + this.end.evaluate(env) + ' step ' + this.step.evaluate(env));
         for (let node of this.body) {
             node.dump(prefix + '  ');
         }
@@ -255,9 +253,9 @@ class VarExprAST {
         this.ident = ident;
     }
 
-    evaluate() {
-        if (this.ident in env.values && env.values[this.ident].value != null) 
-            return env.values[this.ident].value;
+    evaluate(env) {
+        if (this.ident in env.variables && env.variables[this.ident].value != null) 
+            return env.variables[this.ident].value;
         throw new Error("Variable '" + this.ident + "' is not defined");
     }
 
@@ -273,16 +271,14 @@ class ArrExprAST {
         this.index = index;
     }
 
-    evaluate() {
+    evaluate(env) {
         if (this.ident in env.arrays && env.arrays[this.ident].values != null) {
-            let index = this.index.evaluate();
+            let index = this.index.evaluate(env);
             if (index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
                 let value = env.arrays[this.ident].values[index];
-                console.log(value);
                 return value;
             }
-            else
-                throw new Error("Array index out of bounds");
+            throw new Error("Array index out of bounds");
         }
         throw new Error("Array '" + this.ident + "' is not defined");
     }
@@ -301,24 +297,22 @@ class CallExprAST {
         this.args = args;
     }
 
-    evaluate() {
+    evaluate(env) {
         if (this.ident in env.functions) {
             let func = env.functions[this.ident];
-            if (func.args.length == this.args.length) {
+            if (func.params.length == this.args.length) {
                 let values = [];
-                for (let i = 0; i < this.args.length; i++) {
-                    let value = this.args[i].evaluate();
-                    if (value == null)
-                        return null;
-                    values.push(value);
+                for (let arg of this.args) {
+                    let value = arg.evaluate(env);
+                    if (value != null) {
+                        values.push(value);
+                    }
                 }
                 return func.evaluate(values);
             }
-            else
-                throw new Error("Function '" + this.ident + "' expects " + func.args.length + " arguments");
+            throw new Error("Function '" + this.ident + "' expects " + func.args.length + " arguments");
         }
-        else
-            throw new Error("Function '" + this.ident + "' is not defined");
+        throw new Error("Function '" + this.ident + "' is not defined");
     }
 
     dump(prefix) {
@@ -336,8 +330,8 @@ class UnaryExprAST {
         this.expr = expr;
     }
 
-    evaluate() {
-        let value = this.expr.evaluate();
+    evaluate(env) {
+        let value = this.expr.evaluate(env);
         if (value == null)
             return null
         if (this.op == '+' || this.op == '-') {
@@ -375,9 +369,9 @@ class BinaryExprAST {
         this.rhs = rhs;
     }
 
-    evaluate() {
-        let lhs = this.lhs.evaluate();
-        let rhs = this.rhs.evaluate();
+    evaluate(env) {
+        let lhs = this.lhs.evaluate(env);
+        let rhs = this.rhs.evaluate(env);
         if (lhs == null && rhs == null)
             return null
         if (this.op == '+' || this.op == '-' || this.op == '*' || this.op == '/') {
@@ -433,12 +427,27 @@ class BinaryExprAST {
     }
 }
 
+class RndExprAST {
+    constructor() {
+    }
+
+    evaluate(env) {
+        // directly return the number between 0 and 1
+        return Math.random();
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'RndExprAST');
+        return;
+    }
+}
+
 class NumberAST {
     constructor(value) {
         this.value = Number(value);
     }
 
-    evaluate() {
+    evaluate(env) {
         return this.value;
     }
 
@@ -453,7 +462,7 @@ class StringAST {
         this.value = value;
     }
 
-    evaluate() {
+    evaluate(env) {
         return this.value;
     }
 
@@ -471,7 +480,7 @@ class BoolAST {
             this.value = false;
     }
 
-    evaluate() {
+    evaluate(env) {
         return this.value;
     }
 
@@ -486,8 +495,8 @@ class OutputAST {
         this.expr = expr;
     }
 
-    evaluate() {
-        let value = this.expr.evaluate();
+    evaluate(env) {
+        let value = this.expr.evaluate(env);
         if (value != null)
             app.terminal.writeln(value.toString());
         return;
@@ -514,6 +523,7 @@ export {
     CallExprAST,
     UnaryExprAST,
     BinaryExprAST,
+    RndExprAST,
     NumberAST,
     StringAST,
     BoolAST,

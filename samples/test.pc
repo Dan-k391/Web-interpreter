@@ -1,0 +1,5 @@
+// Test after modyfing the interpreter code
+DECLARE i:INTEGER
+
+i <- 100
+OUTPUT i

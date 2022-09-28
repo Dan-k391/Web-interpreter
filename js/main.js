@@ -2,13 +2,13 @@
 
 import { Scanner, all_keywords } from './scanner.js';
 import { Parser } from './parser.js';
+import { Environment } from './environment.js';
 
 Vue.use(ELEMENT);
 var app = new Vue({
     el: '#app',
     data: {
         dumpast: false,
-        date: new Date(),
         editor: null,
         prefix: '$ ',
         file: null,
@@ -47,7 +47,7 @@ var app = new Vue({
                         [/".*?"/, 'string'],
                         [/'.?'/, 'char'],
                         [/\d+/, 'number'],
-                        [/[+\-*/()\[\]=<>:]/, 'operators'],
+                        [/[+\-*/()\[\]=<>:,]/, 'operators'],
                     ]
                 }
             });
@@ -149,7 +149,10 @@ var app = new Vue({
                     this.dumpast ? ast.dump('') : null;
                     let start = new Date().getTime();
                     try {
-                        ast.evaluate();
+                        // Define the global environment
+                        let global_env = new Environment();
+                        // The object global_env is passed by reference
+                        ast.evaluate(global_env);
                     } catch (e) {
                         this.report(e.toString());
                         return;

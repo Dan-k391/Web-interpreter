@@ -7,9 +7,10 @@ const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,]/;
 const DOUBLEOPERATORS = ['<-', '<=', '>=', '<>'];
 const LETTERS = /[a-z]/i;
 const BOOLEANS = ['TRUE', 'FALSE'];
+// built-in functions are also combined in KEYWORDS
 const KEYWORDS = ['FUNCTION', 'ENDFUNCTION', 'PROCEDURE', 'ENDPROCEDURE', 'RETURNS', 'RETURN', 'CALL', 'DECLARE', 'ARRAY', 'OF',
                   'IF', 'THEN', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'MOD', 'AND', 'OR', 'NOT',
-                  'OUTPUT'];
+                  'OUTPUT', 'INPUT', 'RND'];
 const TYPES = ['INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN'];
 
 class Scanner {
@@ -24,7 +25,6 @@ class Scanner {
         for (let line of lines) {
             let tokens = this.tokenize_line(line);
             all_tokens.push(...tokens);
-            all_tokens.push({type: 'newline', value: 'newline'});
             this.current_line++;
         }
         if (all_tokens.length != 0) 
@@ -48,13 +48,14 @@ class Scanner {
             }
             else if (SINGLEOPERATORS.test(char)) {
                 if (DOUBLEOPERATORS.includes(char + line[current + 1])) {
-                    tokens.push({ type: 'operator', value: char + line[current + 1], line: this.current_line, column: current + 1 });
                     current += 2;
+                    // line[current - 1] because current has already been incremented
+                    tokens.push({ type: 'operator', value: char + line[current - 1], line: this.current_line, column: current });
                     continue;
                 }
 
-                tokens.push({ type: 'operator', value: char, line: this.current_line, column: current + 1 });
                 current++;
+                tokens.push({ type: 'operator', value: char, line: this.current_line, column: current });
                 continue;
             }
             else if (LETTERS.test(char) || char == '_') {
@@ -66,16 +67,16 @@ class Scanner {
                 }
 
                 if (TYPES.includes(value)) {
-                    tokens.push({ type: 'type', value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: 'type', value: value, line: this.current_line, column: current });
                 }
                 else if (BOOLEANS.includes(value)) {
-                    tokens.push({ type: 'boolean', value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: 'boolean', value: value, line: this.current_line, column: current });
                 }
                 else if (KEYWORDS.includes(value)) {
-                    tokens.push({ type: value.toLowerCase(), value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: value.toLowerCase(), value: value, line: this.current_line, column: current });
                 }
                 else {
-                    tokens.push({ type: 'identifier', value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: 'identifier', value: value, line: this.current_line, column: current });
                 }
                 continue;
             }
@@ -98,7 +99,7 @@ class Scanner {
                     char = line[++current];
                 }
 
-                tokens.push({ type: 'number', value: value, line: this.current_line, column: current + 1 });
+                tokens.push({ type: 'number', value: value, line: this.current_line, column: current });
                 continue;
             }
             else if (char == '"') {
@@ -114,7 +115,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({ type: 'string', value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: 'string', value: value, line: this.current_line, column: current });
                 }
             }
             else if (char == "'") {
@@ -133,7 +134,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({ type: 'char', value: value, line: this.current_line, column: current + 1 });
+                    tokens.push({ type: 'char', value: value, line: this.current_line, column: current });
                 }
             }
             else {
@@ -144,7 +145,7 @@ class Scanner {
     }
 }
 
-const all_keywords = KEYWORDS.concat(TYPES);
+const all_keywords = [...KEYWORDS, ...TYPES, ...BOOLEANS];
 
 export {
     Scanner,

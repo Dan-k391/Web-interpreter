@@ -12,13 +12,14 @@ import {
     CallExprAST,
     UnaryExprAST,
     BinaryExprAST,
+    RndExprAST,
     NumberAST,
     StringAST,
     BoolAST,
     OutputAST
 } from "./ast.js";
-
 import { Error } from "./error.js";
+
 
 class Parser {
     constructor(tokens) {
@@ -108,10 +109,6 @@ class Parser {
         }
         else if (next_type == 'output') {
             return this.output();
-        }
-        else if (this.expect_type('newline', false)) {
-            this.current_line++;
-            return null;
         }
         this.report_error("Unexpected token: '" + next_type + "'");
     }
@@ -221,6 +218,9 @@ class Parser {
             return new VarExprAST(current_value);
         }
         else if (this.expect_type('call', false)) {
+            /*
+            call_expr -> call ident '(' params ')'
+            */
             let ex_ident = this.expect_type('identifier');
             let ex_lpar = this.expect_value('(');
             let args = [];
@@ -235,6 +235,13 @@ class Parser {
             if (ex_ident && ex_lpar && ex_rpar)
                 return new CallExprAST(current_value, params);
         }
+        // parse rnd into an expr ast
+        else if (this.expect_type('rnd', false)) {
+            let ex_lpar = this.expect_value('(');
+            let ex_rpar = this.expect_value(')');
+            if (ex_lpar && ex_rpar)
+                return new RndExprAST();
+        }
         else if (this.expect_value('(', false)) {
             let expr = this.parse_expr();
             // use expect_value to give an error if not found
@@ -246,7 +253,7 @@ class Parser {
     }
         
 
-    // *****built in functions*****
+    // *****built in methods*****
     output() {
         let ex_output = this.expect_type('output');
         let ex_expr = this.parse_expr();
@@ -333,7 +340,7 @@ class Parser {
             ex_endif = this.expect_type('endif', false);
         }
         if (ex_if && ex_cond && ex_then && ex_endif)
-            return new IfAST(ex_expr, ex_body);
+            return new IfAST(ex_cond, ex_body);
 
         let ex_else_body = [];
         while(ex_endif == null) {
