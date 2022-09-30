@@ -1,0 +1,11 @@
+DECLARE i:STRING
+i <- "outside"
+
+FUNCTION h() RETURNS INTEGER
+    DECLARE i:STRING
+    i <- "inside"
+    OUTPUT i
+ENDFUNCTION
+
+CALL h()
+OUTPUT i

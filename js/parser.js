@@ -1,5 +1,9 @@
+// TODO: unify variable names
+
 import { 
     ProgramAST,
+    FuncDefAST,
+    ReturnAST,
     VarDeclAST,
     ArrDeclAST,
     VarAssignAST,
@@ -17,8 +21,8 @@ import {
     StringAST,
     BoolAST,
     OutputAST
-} from "./ast.js";
-import { Error } from "./error.js";
+} from './ast.js';
+import { Error } from './error.js';
 
 
 class Parser {
@@ -34,6 +38,19 @@ class Parser {
         let column = this.tokens[this.current]['column'];
         let value = this.tokens[this.current]['value'];
         throw new Error(msg + ' (line: ' + line + ', column: ' + column + ', value: ' + value + ')');
+    }
+
+    parse() {
+        let ast = new ProgramAST();
+        while(this.current < this.tokens.length) {
+            let node = this.parse_stmt();
+
+            // if the node is not a new line node, add it to the ast body
+            if (node) {
+                ast.body.push(node);
+            }
+        }
+        return ast;
     }
 
     expect_type(type, throw_error = true) {
@@ -75,41 +92,32 @@ class Parser {
     peek_type() {
         return this.tokens[this.current]['type'];
     }
-    
-    parse() {
-        let ast = new ProgramAST();
-        while(this.current < this.tokens.length) {
-            let node = this.parse_stmt();
-
-            // if the node is not a new line node, add it to the ast body
-            if (node) {
-                ast.body.push(node);
-            }
-        }
-        return ast;
-    }
 
     parse_stmt() {
         let next_type = this.peek_type();
-    
-        if (next_type == 'declare') {
+        
+        if (next_type == 'function') {
+            return this.func_def();
+        }
+        else if (next_type == 'declare')
+            // variable and array declaration
             return this.decl();
-        }
-        else if (next_type == 'identifier') {
+        else if (next_type == 'identifier')
+            // variable and array assignment
             return this.assign();
-        }        
-        else if (next_type == 'if') {
+        else if (next_type == 'if')
             return this.if_statement();
-        }
-        else if (next_type == 'while') {
+        else if (next_type == 'while')
             return this.while_statement();
-        }
-        else if (next_type == 'for') {
+        else if (next_type == 'for')
             return this.for_statement();
-        }
-        else if (next_type == 'output') {
-            return this.output();
-        }
+        else if (next_type == 'return')
+            return this.return_statement();
+        else if (next_type == 'call')
+            // call expr will be handled uniquely
+            return this.parse_expr();
+        else if (next_type == 'output')
+            return this.output();    
         this.report_error("Unexpected token: '" + next_type + "'");
     }
 
@@ -224,16 +232,19 @@ class Parser {
             let ex_ident = this.expect_type('identifier');
             let ex_lpar = this.expect_value('(');
             let args = [];
-            while (this.tokens[this.current]['value'] != ')') {
+            let ex_rpar = this.expect_value(')', false);
+            while (!ex_rpar) {
                 let arg = this.parse_expr();
                 args.push(arg);
                 let ex_comma = this.expect_value(',', false);
+
+                ex_rpar = this.expect_value(')', false);
+
                 if (!ex_comma)
                     break;
             }
-            let ex_rpar = this.expect_value(')');
             if (ex_ident && ex_lpar && ex_rpar)
-                return new CallExprAST(current_value, params);
+                return new CallExprAST(ex_ident, args);
         }
         // parse rnd into an expr ast
         else if (this.expect_type('rnd', false)) {
@@ -262,39 +273,81 @@ class Parser {
         return null;
     }
 
-    decl() {
-        /*
-        decl -> declare identifier ':' type | decl -> declare identifier ':' array '[' ']' OF type
-        */
-        let ex_declare = this.expect_type('declare');
+    func_def() {
+        /**
+         * func_def -> function identifier returns type body endfunction
+         */
+        let ex_func = this.expect_type('function');
         let ex_ident = this.expect_type('identifier');
-        let ex_op = this.expect_value(':');
+        let ex_lpar = this.expect_value('(');
+        let ex_params = [];
+        let ex_rpar = this.expect_value(')', false);
+        while (!ex_rpar) {
+            let ex_ident = this.expect_type('identifier');
+            let ex_colon = this.expect_value(':');
+            let ex_type = this.expect_type('type');
+            // param : { id: id, type: type }
+            if (ex_ident && ex_colon && ex_type)
+                ex_params.push({ id: ex_ident, type: ex_type });
+            let ex_comma = this.expect_value(',', false);
+            ex_rpar = this.expect_value(')', false);
+
+            if (!ex_comma)
+                break;
+        }
+        let ex_returns = this.expect_type('returns');
+        let ex_type = this.expect_type('type');
+        let ex_body = [];
+        let ex_endfunc = this.expect_type('endfunction', false);
+        while (!ex_endfunc) {
+            let node = this.parse_stmt();
+
+            if (node == null)
+                return null;
+
+            ex_body.push(node);
+            ex_endfunc = this.expect_type('endfunction', false);
+        }
+        if (ex_func && ex_ident && ex_lpar && ex_rpar && ex_returns && ex_type && ex_endfunc)
+            return new FuncDefAST(ex_ident, ex_params, ex_type, ex_body)
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
+    }
+
+    return_statement() {
+        let ex_return = this.expect_type('return');
+        let ex_expr = this.parse_expr();
+        if (ex_return && ex_expr)
+            return new ReturnAST(ex_expr);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
+    }
+
+    decl() {
+        /**
+         * decl -> declare identifier ':' type | decl -> declare identifier ':' array '[' ']' OF type
+         */
+        let ex_decl = this.expect_type('declare');
+        let ex_ident = this.expect_type('identifier');
+        let ex_colon = this.expect_value(':');
         let ex_type = this.expect_type('type', false);
-        if (ex_declare && ex_ident && ex_op && ex_type)
+        if (ex_decl && ex_ident && ex_colon && ex_type)
             return new VarDeclAST(ex_ident, ex_type);
         let ex_arr = this.expect_type('array');
         let ex_lpar = this.expect_value('[');
         let ex_lower = this.expect_type('number');
-        let ex_op2 = this.expect_value(':');
+        let ex_colon2 = this.expect_value(':');
         let ex_upper = this.expect_type('number');
         let ex_rpar = this.expect_value(']');
         let ex_of = this.expect_type('of');
         ex_type = this.expect_type('type');
-        if (ex_declare && ex_ident && ex_op && ex_arr && ex_lpar && ex_lower && ex_op2 && ex_upper && ex_rpar && ex_of && ex_type)
+        if (ex_decl && ex_ident && ex_colon && ex_arr && ex_lpar && ex_lower && ex_colon2 && ex_upper && ex_rpar && ex_of && ex_type)
             return new ArrDeclAST(ex_ident, ex_type, ex_lower, ex_upper);
         this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
-    var_decl() {
-        /*
-        var_decl -> declare identifier ':' type
-        */
-    }
-
     assign() {
-        /*
-        assign -> identifier '<-' expr | identifier '[' expr ']' '<-' expr
-        */
+        /**
+         * assign -> identifier '<-' expr | identifier '[' expr ']' '<-' expr
+         */
         let ex_ident = this.expect_type('identifier');
         let ex_lpar = this.expect_value('[', false);
         if (ex_lpar) {
@@ -313,23 +366,17 @@ class Parser {
         this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
-    variable_assignment() {
-        /*
-        var_assign -> identifier '<-' expr
-        */
-    }
-
     if_statement() {
-        /*
-        if_statement -> if expr then statement_list (else statement_list)? endif
-        */
+        /**
+         * if_statement -> if expr then statement_list (else statement_list)? endif
+         */
         let ex_if = this.expect_type('if');
         let ex_cond = this.parse_expr();
         let ex_then = this.expect_type('then');
         let ex_body = [];
         let ex_else = this.expect_type('else', false);
         let ex_endif = this.expect_type('endif', false);
-        while(ex_else == null && ex_endif == null) {
+        while(!ex_else && !ex_endif) {
             let node = this.parse_stmt();
 
             if (node == null)
@@ -362,7 +409,7 @@ class Parser {
         let ex_expr = this.parse_expr();
         let ex_body = [];
         let ex_endwhile = this.expect_type('endwhile', false);
-        while(ex_endwhile == null) {
+        while(!ex_endwhile) {
             let node = this.parse_stmt();
 
             if (node == null)
@@ -389,7 +436,7 @@ class Parser {
             ex_step_val = this.parse_expr();
         let ex_body = [];
         let ex_next = this.expect_type('next', false);
-        while(ex_next == null) {
+        while(!ex_next) {
             let node = this.parse_stmt();
 
             if (node == null)

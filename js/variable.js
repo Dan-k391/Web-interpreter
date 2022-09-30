@@ -1,3 +1,6 @@
+import { Error } from './error.js';
+
+
 function type_of(value) {
     if (typeof(value) == 'number') {
         if (String(num).indexOf('.') > -1)
@@ -14,9 +17,23 @@ function type_of(value) {
 }
 
 class Variable {
-    constructor(type) {
-        this.value = null;
+    constructor(ident, type, value = null) {
+        this.ident = ident;
         this.type = type;
+        this.value = value;
+    }
+
+    assign(value) {
+        if (typeof(value) == this.type) {
+            this.value = value;
+        }
+        else {
+            throw new Error('Type mismatch for variable: ' + this.ident);
+        }
+    }
+
+    get() {
+        return this.value;
     }
 }
 

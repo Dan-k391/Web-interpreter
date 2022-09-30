@@ -1,0 +1,25 @@
+﻿DECLARE nums:ARRAY[0:1000] OF REAL
+DECLARE i:INTEGER
+DECLARE j:INTEGER
+DECLARE temp:INTEGER
+
+FOR i <- 0 TO 1000
+    nums[i] <- RND()
+    OUTPUT nums[i]
+NEXT i
+
+OUTPUT "before"
+
+FOR i <- 1 TO 1000
+    FOR j <- 0 TO 1000 - i
+        IF nums[j] > nums[j + 1] THEN
+            temp <- nums[j]
+            nums[j] <- nums[j + 1]
+            nums[j + 1] <- temp
+        ENDIF
+    NEXT j
+NEXT i
+
+FOR i <- 0 TO 1000
+    OUTPUT nums[i]
+NEXT i

@@ -12,7 +12,9 @@ return
 ```
 Use return instead of else
 ```js
-values = {}
+values = { id: 'hi' }
+// try to use this instead of if (values.id)
+console.log(values['id'])
 ```
 Use dictionaries instead of maps
 ```js

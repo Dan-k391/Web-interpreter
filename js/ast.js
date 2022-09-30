@@ -3,9 +3,7 @@
 
 import { app } from './main.js';
 import { Error } from './error.js';
-import { Variable } from './variable.js';
-import { Array } from './array.js';
-import { Function } from './function.js';
+import { Function, Return } from './function.js';
 
 
 class ProgramAST {
@@ -34,6 +32,59 @@ class ProgramAST {
     }
 }
 
+class FuncDefAST {
+    /**
+     * 
+     * @param {string} ident 
+     * @param {array(param)} params 
+     * param {id: id, type: type}
+     * @param {string} type 
+     * @param {array} body 
+     */
+    constructor(ident, params, type, body) {
+        this.ident = ident;
+        this.params = params;
+        this.type = type;
+        this.body = body;
+    }
+
+    evaluate(env) {
+        // maybe dont pass this.ident in the future
+        let func = new Function(this.ident, this.params, this.type, this.body);
+        env.define(this.ident, func);
+        return;
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'FuncDefAST: ' + this.ident);
+        for (let param of this.params) {
+            param.dump(prefix + '  ');
+        }
+        for (let node of this.body) {
+            node.dump(prefix + '  ');
+        }
+        return;
+    }
+}
+
+class ReturnAST {
+    constructor(expr) {
+        this.expr = expr;
+    }
+
+    evaluate(env) {
+        let value = this.expr.evaluate(env);
+        throw new Return(value);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'ReturnAST');
+        this.expr.dump(prefix + '  ');
+        return;
+    }
+}
+
+
 class VarDeclAST {
     constructor(ident, type) {
         this.ident = ident;
@@ -49,7 +100,7 @@ class VarDeclAST {
     }
 
     evaluate(env) {
-        env.variables[this.ident] = new Variable(this.type);
+        env.declare_variable(this.ident, this.type);
         return;
     }
 
@@ -76,7 +127,8 @@ class ArrDeclAST {
     }
 
     evaluate(env) {
-        env.arrays[this.ident] = new Array(this.type, this.lower, this.upper);
+        // convert upper and lower to number
+        env.declare_array(this.ident, this.type, Number(this.lower), Number(this.upper));
         return;
     }
 
@@ -95,15 +147,7 @@ class VarAssignAST {
 
     evaluate(env) {
         let value = this.expr.evaluate(env);
-        if (this.ident in env.variables) {
-            if (typeof(value) == env.variables[this.ident].type)
-                env.variables[this.ident].value = value;
-            else
-                throw new Error('Type mismatch in assignment for Variable ' + this.ident);
-        }
-        else {
-            throw new Error("Variable '" + this.ident + "' is not declared");
-        }
+        env.set_variable(this.ident, value);
         return;
     }
 
@@ -125,19 +169,7 @@ class ArrAssignAST {
     evaluate(env) {
         let index = this.index.evaluate(env);
         let value = this.expr.evaluate(env);
-        if (this.ident in env.arrays) {
-            if (typeof(index) == 'number' && index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
-                if (typeof(value) == env.arrays[this.ident].type)
-                    env.arrays[this.ident].values[index] = value;
-                else
-                    throw new Error('Type mismatch in assignment for Array ' + this.ident);
-            }
-            else
-                throw new Error('Index out of bounds for Array ' + this.ident);
-        }
-        else {
-            throw new Error("Array '" + this.ident + "' is not declared");
-        }
+        env.set_array(this.ident, index, value);
         return;
     }
 
@@ -229,7 +261,7 @@ class ForAST {
         let step = this.step.evaluate(env);
         if (start < end) {
             for (let i = start; i <= end && count < 50100; i += step) {
-                env.variables[this.ident].value = i;
+                env.set_variable(this.ident, i);
                 for (let node of this.body) {
                     node.evaluate(env);
                 }
@@ -254,9 +286,7 @@ class VarExprAST {
     }
 
     evaluate(env) {
-        if (this.ident in env.variables && env.variables[this.ident].value != null) 
-            return env.variables[this.ident].value;
-        throw new Error("Variable '" + this.ident + "' is not defined");
+        return env.get_variable(this.ident);
     }
 
     dump(prefix) {
@@ -272,15 +302,8 @@ class ArrExprAST {
     }
 
     evaluate(env) {
-        if (this.ident in env.arrays && env.arrays[this.ident].values != null) {
-            let index = this.index.evaluate(env);
-            if (index >= env.arrays[this.ident].lower && index <= env.arrays[this.ident].upper) {
-                let value = env.arrays[this.ident].values[index];
-                return value;
-            }
-            throw new Error("Array index out of bounds");
-        }
-        throw new Error("Array '" + this.ident + "' is not defined");
+        let index = this.index.evaluate(env);
+        return env.get_array(this.ident, index);
     }
 
     dump(prefix) {
@@ -298,27 +321,22 @@ class CallExprAST {
     }
 
     evaluate(env) {
-        if (this.ident in env.functions) {
-            let func = env.functions[this.ident];
-            if (func.params.length == this.args.length) {
-                let values = [];
-                for (let arg of this.args) {
-                    let value = arg.evaluate(env);
-                    if (value != null) {
-                        values.push(value);
-                    }
-                }
-                return func.evaluate(values);
-            }
-            throw new Error("Function '" + this.ident + "' expects " + func.args.length + " arguments");
+        let func = env.get_function(this.ident);
+        let args = [];
+        for (let arg of this.args) {
+            args.push(arg.evaluate(env));
         }
-        throw new Error("Function '" + this.ident + "' is not defined");
+        // put arity check into function class in the future
+        if (args.length == func.arity()) {
+            return func.call(env, args);
+        }
+        throw new Error("Function '" + this.ident + "' expects " + func.params.length + " arguments");
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'CallExprAST: ' + this.ident);
-        for (let node of this.args) {
-            node.dump(prefix + '  ');
+        for (let arg of this.args) {
+            arg.dump(prefix + '  ');
         }
         return;
     }
@@ -511,6 +529,8 @@ class OutputAST {
 
 export {
     ProgramAST,
+    FuncDefAST,
+    ReturnAST,
     VarDeclAST,
     ArrDeclAST,
     VarAssignAST,
