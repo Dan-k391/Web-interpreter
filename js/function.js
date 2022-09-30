@@ -24,7 +24,7 @@ class Function {
     }
 
     call(g_env, args) {
-        let env = new Environment();
+        let env = new Environment(g_env);
         for (let i = 0; i < this.params.length; i++) {
             let param = this.params[i];
             let arg = args[i];
@@ -39,8 +39,11 @@ class Function {
                 param_type = 'boolean';
             }
 
-            if (typeof(arg) == param_type)
-                env.variables[param['id']] = new Variable(param_type, arg);
+            if (typeof(arg) == param_type) {
+                // declare then set...
+                env.declare_variable(param['id'], param_type);
+                env.set_variable(param['id'], arg);
+            }
             else
                 throw new Error('Type mismatch in argument ' + param['id'] + ' of function ' + this.ident);
         }
@@ -58,7 +61,7 @@ class Function {
                 }
             }
         }
-        throw new Error('Function muse contain one return statement');
+        throw new Error('Function must contain one return statement');
     }
 }
 
