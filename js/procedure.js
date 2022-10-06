@@ -3,7 +3,7 @@ import { Variable } from './variable.js';
 import { Error } from './error.js';
 
 
-class Function {
+class Procedure {
     /**
      * 
      * @param {string} ident 
@@ -38,16 +38,6 @@ class Function {
             else if (param.type == 'BOOLEAN') {
                 param_type = 'boolean';
             }
-            else if (param.type == 'ARRAY') {
-                // stupid way
-                if (Array.isArray(arg)) {
-                    env.declare_array(param['id'], arg);
-                    let index = 0;
-                    for (let item of arg) {
-                        env.declare_array(param['id'], typeof(item));
-                    }
-                }
-            }
 
             if (typeof(arg) == param_type) {
                 // declare then set...
@@ -58,23 +48,8 @@ class Function {
                 throw new Error('Type mismatch in argument ' + param['id'] + ' of function ' + this.ident);
         }
         for (let node of this.body) {
-            try {
-                // The object env is passed by reference
-                node.evaluate(env);
-            }
-            catch (e) {
-                if (e instanceof Return) {
-                    if (typeof(e.value) == this.type) {
-                        return e.value;
-                    }
-                    throw new Error('Type mismatch in return value of function ' + this.ident);
-                }
-                else {
-                    throw e;
-                }
-            }
+            node.evaluate(env);
         }
-        throw new Error('Function must contain one return statement');
     }
 }
 
@@ -85,6 +60,5 @@ class Return {
 }
 
 export {
-    Function,
-    Return
+    Procedure
 }

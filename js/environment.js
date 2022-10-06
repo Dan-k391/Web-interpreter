@@ -1,5 +1,6 @@
 import { Variable } from './variable.js';
 import { Array } from './array.js';
+import { Function } from './function.js';
 import { Error } from './error.js';
 
 
@@ -27,8 +28,11 @@ class Environment {
     }
 
     // define function
-    define(name, value) {
-        this.functions[name] = value;
+    define_function(name, params, type, body) {
+        if (name in this.functions) {
+            throw new Error('Function already declared: ' + name);
+        }
+        this.functions[name] = new Function(name, params, type, body);
     }
 
     set_variable(name, value) {
@@ -39,7 +43,7 @@ class Environment {
             this.enclosing.set_variable(name, value);
         }
         else {
-            throw new Error('Variable ' + name + ' not found');
+            throw new Error("Use of undeclared Variable '" + name + "'");
         }
     }
 
@@ -51,7 +55,7 @@ class Environment {
             this.enclosing.set_array(name, index, value);
         }
         else {
-            throw new Error('Array ' + name + ' not found');
+            throw new Error("Use of undeclared Array '" + name + "'");
         }
     }
 
@@ -63,7 +67,7 @@ class Environment {
             return this.enclosing.get_variable(name);
         }
         else {
-            throw new Error('Variable ' + name + ' not found');
+            throw new Error("Use of undeclared Variable '" + name + "'");
         }
     }
 
@@ -75,7 +79,7 @@ class Environment {
             return this.enclosing.get_array(name);
         }
         else {
-            throw new Error('Array ' + name + ' not found');
+            throw new Error("Use of undeclared Array '" + name + "'");
         }
     }
 
@@ -87,7 +91,7 @@ class Environment {
             return this.enclosing.get_function(name);
         }
         else {
-            throw new Error('Function ' + name + ' not found');
+            throw new Error("Function '" + name + "' not found");
         }
     }
 }

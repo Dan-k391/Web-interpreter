@@ -1,21 +1,5 @@
 import { Error } from './error.js';
 
-
-function type_of(value) {
-    if (typeof(value) == 'number') {
-        if (String(num).indexOf('.') > -1)
-            return 'integer';
-        else
-            return 'real';
-    }
-    else if (typeof(value) == 'string') {
-        return 'string';
-    }
-    else if (typeof(value) == 'boolean') {
-        return 'boolean';
-    }
-}
-
 class Variable {
     constructor(ident, type, value = null) {
         this.ident = ident;
@@ -28,11 +12,14 @@ class Variable {
             this.value = value;
         }
         else {
-            throw new Error('Type mismatch for variable: ' + this.ident);
+            throw new Error("Type mismatch for variable '" + this.ident + "'");
         }
     }
 
     get() {
+        if (this.value == null) {
+            throw new Error("Variable '" + this.ident + "' is not initialized");
+        }
         return this.value;
     }
 }

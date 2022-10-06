@@ -1,13 +1,14 @@
 class Error {
-    constructor(msg, current_line = null, current_char = null) {
+    constructor(msg, line = null, start_column = null, end_column = null) {
         this.msg = msg;
-        this.current_line = current_line;
-        this.current_char = current_char;
+        this.line = line;
+        this.start_column = start_column;
+        this.end_column = end_column;
     }
 
     toString() {
-        if (this.current_line != null && this.current_char != null) {
-            return this.msg + ' at line ' + this.current_line + ':' + this.current_char;
+        if (this.line != null && this.start_column != null) {
+            return this.msg + ' at line ' + this.line + ':' + this.start_column;
         }
         return this.msg;
     }

@@ -35,9 +35,10 @@ class Parser {
 
     report_error(msg) {
         let line = this.tokens[this.current]['line'];
-        let column = this.tokens[this.current]['column'];
+        let start_column = this.tokens[this.current]['start_column'];
+        let end_column = this.tokens[this.current]['end_column'];
         let value = this.tokens[this.current]['value'];
-        throw new Error(msg + ' (line: ' + line + ', column: ' + column + ', value: ' + value + ')');
+        throw new Error(msg + ' (line: ' + line + ', column: ' + start_column + ', value: ' + value + ')', line, start_column, end_column);
     }
 
     parse() {
@@ -67,7 +68,7 @@ class Parser {
             return null;
         }
         if (throw_error)
-            this.report_error("Expected token with type: '" + type + "', Got end of line");
+            this.report_error("Expected token with type: '" + type + "', Got end of file");
         return null;
     }
 
@@ -85,7 +86,7 @@ class Parser {
             return null;
         }
         if (throw_error)
-            this.report_error("Expected token with value: '" + value + "', Got end of line");
+            this.report_error("Expected token with value: '" + value + "', Got end of file");
         return null;
     }
 
@@ -168,7 +169,8 @@ class Parser {
         let expr = this.parse_factor();
 
         while (true) {
-            let ex_op = this.expect_value('+', false) || this.expect_value('-', false);
+            // put & here because it is a add operator
+            let ex_op = this.expect_value('+', false) || this.expect_value('-', false) || this.expect_value('&', false);
             if (ex_op) {
                 let rhs = this.parse_factor();
                 expr = new BinaryExprAST(ex_op, expr, rhs);
@@ -267,9 +269,17 @@ class Parser {
     // *****built in methods*****
     output() {
         let ex_output = this.expect_type('output');
+        let ex_exprs = [];
         let ex_expr = this.parse_expr();
-        if (ex_output && ex_expr)
-            return new OutputAST(ex_expr);
+        while (ex_expr) {
+            ex_exprs.push(ex_expr);
+            let ex_comma = this.expect_value(',', false);
+            if (!ex_comma)
+                break;
+            ex_expr = this.parse_expr();
+        }
+        if (ex_output && ex_exprs)
+            return new OutputAST(ex_exprs);
         return null;
     }
 
@@ -333,9 +343,10 @@ class Parser {
             return new VarDeclAST(ex_ident, ex_type);
         let ex_arr = this.expect_type('array');
         let ex_lpar = this.expect_value('[');
-        let ex_lower = this.expect_type('number');
+        // array bug, brugh
+        let ex_lower = this.parse_expr();
         let ex_colon2 = this.expect_value(':');
-        let ex_upper = this.expect_type('number');
+        let ex_upper = this.parse_expr();
         let ex_rpar = this.expect_value(']');
         let ex_of = this.expect_type('of');
         ex_type = this.expect_type('type');

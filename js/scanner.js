@@ -3,7 +3,7 @@ import { Error } from "./error.js";
 
 const WHITESPACE = /\s/;
 const NUMBERS = /[0-9]/;
-const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,]/;
+const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,&]/;
 const DOUBLEOPERATORS = ['<-', '<=', '>=', '<>'];
 const LETTERS = /[a-z]/i;
 const BOOLEANS = ['TRUE', 'FALSE'];
@@ -51,12 +51,12 @@ class Scanner {
                 if (DOUBLEOPERATORS.includes(char + line[current + 1])) {
                     current += 2;
                     // line[current - 1] because current has already been incremented
-                    tokens.push({ type: 'operator', value: char + line[current - 1], line: this.current_line, column: current });
+                    tokens.push({ type: 'operator', value: char + line[current - 1], line: this.current_line, start_column: current - 2, end_column: current });
                     continue;
                 }
 
                 current++;
-                tokens.push({ type: 'operator', value: char, line: this.current_line, column: current });
+                tokens.push({ type: 'operator', value: char, line: this.current_line, start_column: current - 1, end_column: current });
                 continue;
             }
             else if (LETTERS.test(char) || char == '_') {
@@ -68,16 +68,16 @@ class Scanner {
                 }
 
                 if (TYPES.includes(value)) {
-                    tokens.push({ type: 'type', value: value, line: this.current_line, column: current });
+                    tokens.push({ type: 'type', value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 }
                 else if (BOOLEANS.includes(value)) {
-                    tokens.push({ type: 'boolean', value: value, line: this.current_line, column: current });
+                    tokens.push({ type: 'boolean', value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 }
                 else if (KEYWORDS.includes(value)) {
-                    tokens.push({ type: value.toLowerCase(), value: value, line: this.current_line, column: current });
+                    tokens.push({ type: value.toLowerCase(), value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 }
                 else {
-                    tokens.push({ type: 'identifier', value: value, line: this.current_line, column: current });
+                    tokens.push({ type: 'identifier', value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 }
                 continue;
             }
@@ -100,7 +100,7 @@ class Scanner {
                     char = line[++current];
                 }
 
-                tokens.push({ type: 'number', value: value, line: this.current_line, column: current });
+                tokens.push({ type: 'number', value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 continue;
             }
             else if (char == '"') {
@@ -116,7 +116,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({ type: 'string', value: value, line: this.current_line, column: current });
+                    tokens.push({ type: 'string', value: value, line: this.current_line, start_column: current - value.length - 2, end_column: current });
                 }
             }
             else if (char == "'") {
@@ -135,7 +135,7 @@ class Scanner {
                 }
                 else {
                     current++;
-                    tokens.push({ type: 'char', value: value, line: this.current_line, column: current });
+                    tokens.push({ type: 'char', value: value, line: this.current_line, start_column: current - value.length - 2, end_column: current });
                 }
             }
             else {
@@ -146,7 +146,7 @@ class Scanner {
     }
 }
 
-const all_keywords = [...KEYWORDS, ...TYPES, ...BOOLEANS];
+const all_keywords = [...BOOLEANS, ...TYPES, ...KEYWORDS];
 
 export {
     Scanner,

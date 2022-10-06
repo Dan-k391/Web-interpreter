@@ -1,9 +1,10 @@
 // TODO: Improve type system
 // TODO: Maybe improve Arrays(lower bound starts from none zero).....
+// TODO: Change to stack 
 
 import { app } from './main.js';
 import { Error } from './error.js';
-import { Function, Return } from './function.js';
+import { Return } from './function.js';
 
 
 class ProgramAST {
@@ -12,11 +13,9 @@ class ProgramAST {
     }
 
     evaluate(env) {
-        let result = null;
         for (let node of this.body) {
-            result = node.evaluate(env);
+            node.evaluate(env);
         }
-        return result;
     }
 
     dump(prefix) {
@@ -24,11 +23,6 @@ class ProgramAST {
         for (let node of this.body) {
             node.dump(prefix + '  ');
         }
-        return;
-    }
-    
-    stop() {
-        throw new Error('User stopped the program');
     }
 }
 
@@ -44,15 +38,22 @@ class FuncDefAST {
     constructor(ident, params, type, body) {
         this.ident = ident;
         this.params = params;
-        this.type = type;
+        if (type == 'INTEGER' || type == 'REAL') {
+            this.type = 'number';
+        }
+        else if (type == 'STRING' || type == 'CHAR') {
+            this.type = 'string';
+        }
+        else if (type == 'BOOLEAN') {
+            this.type = 'boolean';
+        }
         this.body = body;
     }
 
     evaluate(env) {
         // maybe dont pass this.ident in the future
-        let func = new Function(this.ident, this.params, this.type, this.body);
-        env.define(this.ident, func);
-        return;
+        // no, pass it
+        env.define_function(this.ident, this.params, this.type, this.body);
     }
 
     dump(prefix) {
@@ -63,7 +64,6 @@ class FuncDefAST {
         for (let node of this.body) {
             node.dump(prefix + '  ');
         }
-        return;
     }
 }
 
@@ -74,13 +74,13 @@ class ReturnAST {
 
     evaluate(env) {
         let value = this.expr.evaluate(env);
+        // check in value is implemented in function.js
         throw new Return(value);
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'ReturnAST');
         this.expr.dump(prefix + '  ');
-        return;
     }
 }
 
@@ -101,12 +101,11 @@ class VarDeclAST {
 
     evaluate(env) {
         env.declare_variable(this.ident, this.type);
-        return;
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'VarDeclAST ' + this.ident + ' ' + this.type);
-        return;
+        
     }
 }
 
@@ -128,13 +127,15 @@ class ArrDeclAST {
 
     evaluate(env) {
         // convert upper and lower to number
-        env.declare_array(this.ident, this.type, Number(this.lower), Number(this.upper));
-        return;
+        // i just did not find this bug before holy shit!!!
+        let lower = this.lower.evaluate(env);
+        let upper = this.upper.evaluate(env);
+        env.declare_array(this.ident, this.type, lower, upper);
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'ArrayDeclAST ' + this.ident + ' ' + this.type + ' ' + this.lower + '-' + this.upper);
-        return;
+        
     }
 }
 
@@ -148,13 +149,11 @@ class VarAssignAST {
     evaluate(env) {
         let value = this.expr.evaluate(env);
         env.set_variable(this.ident, value);
-        return;
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'VarAssignAST: ' + this.ident);
         this.expr.dump(prefix + '  ');
-        return;
     }
 }
 
@@ -170,14 +169,12 @@ class ArrAssignAST {
         let index = this.index.evaluate(env);
         let value = this.expr.evaluate(env);
         env.set_array(this.ident, index, value);
-        return;
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'ArrAssignAST: ' + this.ident);
         this.index.dump(prefix + '  ');
         this.expr.dump(prefix + '  ');
-        return;
     }
 }
 
@@ -199,7 +196,7 @@ class IfAST {
                 node.evaluate(env);
             }
         }
-        return;
+        
     }
 
     dump(prefix) {
@@ -214,7 +211,7 @@ class IfAST {
                 node.dump(prefix + '  ');
             }
         }
-        return;
+        
     }
 }
 
@@ -232,7 +229,7 @@ class WhileAST {
             }
             count++;
         }
-        return;
+        
     }
 
     dump(prefix) {
@@ -268,7 +265,7 @@ class ForAST {
                 count++;
             }
         }
-        return;
+        
     }
 
     dump(prefix) {
@@ -291,7 +288,6 @@ class VarExprAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'VarExprAST: ' + this.ident);
-        return;
     }
 }
 
@@ -309,7 +305,6 @@ class ArrExprAST {
     dump(prefix) {
         app.terminal.writeln(prefix + 'ArrExprAST: ' + this.ident);
         this.index.dump(prefix + '  ');
-        return;
     }
 }
 
@@ -324,7 +319,8 @@ class CallExprAST {
         let func = env.get_function(this.ident);
         let args = [];
         for (let arg of this.args) {
-            args.push(arg.evaluate(env));
+            let value = arg.evaluate(env);
+            args.push(value);
         }
         // put arity check into function class in the future
         if (args.length == func.arity()) {
@@ -338,7 +334,7 @@ class CallExprAST {
         for (let arg of this.args) {
             arg.dump(prefix + '  ');
         }
-        return;
+        
     }
 }
 
@@ -376,7 +372,7 @@ class UnaryExprAST {
     dump(prefix) {
         app.terminal.writeln(prefix + 'UnaryExprAST: ' + this.op);
         this.expr.dump(prefix + '  ');
-        return;
+        
     }
 }
 
@@ -403,8 +399,9 @@ class BinaryExprAST {
                 else if (this.op == '/')
                     return lhs / rhs;
             }
-            else
+            else {
                 throw new Error('Type mismatch in binary expression');
+            }
         }
         else if (this.op == 'AND' || this.op == 'OR') {
             if (typeof(lhs) == 'boolean' && typeof(rhs) == 'boolean') {
@@ -413,8 +410,9 @@ class BinaryExprAST {
                 else if (this.op == 'OR')
                     return lhs || rhs;
             }
-            else
-            throw new Error('Type mismatch in binary expression');
+            else {
+                throw new Error('Type mismatch in binary expression');
+            }
         }
         else if (this.op == '=' || this.op == '<>' || this.op == '<' || this.op == '<=' || this.op == '>' || this.op == '>=') {
             if (typeof(lhs) == typeof(rhs)) {
@@ -431,17 +429,26 @@ class BinaryExprAST {
                 else if (this.op == '>=')
                     return lhs >= rhs;
             }
-            else
-            throw new Error('Type mismatch in binary expression');
+            else {
+                throw new Error('Type mismatch in binary expression');
+            }
         }
-        return null;
+        else if (this.op == '&') {
+            if (typeof(lhs) == 'string' && typeof(rhs) == 'string') {
+                return lhs + rhs;
+            }
+            else {
+                throw new Error('Type mismatch in binary expression');
+            }
+        }
+        throw new Error('Unknown binary operator');
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'BinaryExprAST: ' + this.op);
         this.lhs.dump(prefix + '  ');
         this.rhs.dump(prefix + '  ');
-        return;
+        
     }
 }
 
@@ -456,7 +463,7 @@ class RndExprAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'RndExprAST');
-        return;
+        
     }
 }
 
@@ -471,7 +478,7 @@ class NumberAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'NumberAST: ' + this.value.toString());
-        return;
+        
     }
 }
 
@@ -486,7 +493,7 @@ class StringAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'StringAST: ' + this.value);
-        return;
+        
     }
 }
 
@@ -504,26 +511,30 @@ class BoolAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'BoolAST: ' + this.value);
-        return;
+        
     }
 }
 
 class OutputAST {
-    constructor(expr) {
-        this.expr = expr;
+    constructor(exprs) {
+        this.exprs = exprs;
     }
 
     evaluate(env) {
-        let value = this.expr.evaluate(env);
-        if (value != null)
+        for (let expr of this.exprs) {
+            let value = expr.evaluate(env);
+            if (value == null)
+                return null;
             app.terminal.writeln(value.toString());
-        return;
+            // for debug
+            // console.log(value.toString());
+        }
     }
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'OutputAST');
         this.expr.dump(prefix + '  ');
-        return;
+        
     }
 }
 

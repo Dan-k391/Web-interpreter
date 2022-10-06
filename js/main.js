@@ -16,6 +16,7 @@ var app = new Vue({
         ast: null,
         terminal: null,
         fit_addon: null,
+        markers: [],
         cmd: ''
     },
     mounted() {
@@ -39,7 +40,7 @@ var app = new Vue({
                     root: [
                         [/[a-zA-Z_]\w*/, {
                             cases: {
-                                '@all_keywords': 'keyword',
+                                '@all_keywords': 'keywords',
                                 '@default': 'variable',
                             }
                         }],
@@ -47,14 +48,14 @@ var app = new Vue({
                         [/".*?"/, 'string'],
                         [/'.?'/, 'char'],
                         [/\d+/, 'number'],
-                        [/[+\-*/()\[\]=<>:,]/, 'operators'],
+                        [/[+\-*/()\[\]=<>:,&]/, 'operators'],
                     ]
                 }
             });
             monaco.editor.defineTheme('pseudocode-theme', {
                 base: 'vs',
                 rules: [
-                    { token: 'keyword', foreground: '#8e2aa0' },
+                    { token: 'keywords', foreground: '#8e2aa0' },
                     { token: 'comment', foreground: '#a1a1a1', fontStyle: 'italic' },
                     { token: 'variable', foreground: '#393a42' },
                     { token: 'string', foreground: '#71a056' },
@@ -86,17 +87,31 @@ var app = new Vue({
                 theme: 'pseudocode-theme',
                 automaticLayout: true
             });
+            this.editor.addAction({
+                id: 'run',
+                label: 'run',
+                keybindings: [
+                    monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter
+                ],
+                run: () => {
+                    this.run();
+                }
+            })
         });
 
         this.terminal = new Terminal({
             rendererType: 'dom',
-            rows: 16,
             theme: {
                 foreground: 'white',
                 background: '#696969'
             }
         });
+        this.fit_addon = new FitAddon.FitAddon();
+        this.terminal.loadAddon(this.fit_addon);
         this.terminal.open(this.$refs.terminal);
+        // fit_addon worked!!!!
+        this.fit_addon.fit();
+        this.terminal.focus();
         this.terminal.writeln('Welcome to the Pseudocode interpreter');
         this.terminal.write(this.prefix);
 
@@ -119,14 +134,18 @@ var app = new Vue({
     },
     methods: {
         run() {
+            // clear the markers
+            this.markers = [];
+            monaco.editor.setModelMarkers(this.editor.getModel(), 'pseudocode', this.markers);
             this.code = this.editor?.getValue();
             if (this.code) {
                 let tokens = null;
                 let scanner = new Scanner(this.code);
                 try {
                     tokens = scanner.scan();
-                } 
+                }
                 catch (e) {
+                    this.set_mark(e);
                     this.report(e.toString());
                     return;
                 }
@@ -141,6 +160,7 @@ var app = new Vue({
                     ast = parser.parse();
                 }
                 catch (e) {
+                    this.set_mark(e);
                     this.report(e.toString());
                     return;
                 }
@@ -154,6 +174,7 @@ var app = new Vue({
                         // The object global_env is passed by reference
                         ast.evaluate(global_env);
                     } catch (e) {
+                        this.set_mark(e);
                         this.report(e.toString());
                         return;
                     }
@@ -182,18 +203,24 @@ var app = new Vue({
             else if (this.cmd == 'egg') {
                 this.terminal.writeln('An egg? Maybe...');
                 this.terminal.write(this.prefix);
+                console.log('......');
             }
             else {
                 this.terminal.writeln(this.cmd + ': Command not found');
                 this.terminal.write(this.prefix);
             }
         },
+        resize_terminal() {
+            this.fit_addon.fit();
+        },
         set_mark(e) {
+            // for debug
+            console.log(e);
             this.markers.push({
-                startLineNumber: e.current_line,
-                endLineNumber: e.current_line,
-                startColumn: e.current_char,
-                endColumn: e.current_char + 1,
+                startLineNumber: e.line,
+                endLineNumber: e.line,
+                startColumn: e.start_column + 1,
+                endColumn: e.end_column + 1,
                 message: e.msg,
                 severity: monaco.MarkerSeverity.Error
             });

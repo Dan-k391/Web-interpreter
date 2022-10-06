@@ -1,0 +1,9 @@
+FUNCTION rec(i:INTEGER) RETURNS INTEGER
+    OUTPUT i
+    IF i > 100 THEN
+        RETURN i
+    ENDIF
+    RETURN CALL rec(i + 1)
+ENDFUNCTION
+
+OUTPUT CALL rec(1)

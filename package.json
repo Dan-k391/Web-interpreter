@@ -2,5 +2,6 @@
     "name": "web-interpreter",
     "version": "0.0.1",
     "author": "Dan-k391 <3242118462@qq.com>",
-    "contributors": []
+    "contributors": [],
+    "main": "js/main.js"
 }

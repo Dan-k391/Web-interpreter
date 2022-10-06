@@ -12,19 +12,22 @@ class Array {
 
     assign(index, value) {
         if (index < this.lower || index > this.upper) {
-            throw new Error('Index out of bounds');
+            throw new Error("Index '" + index + "' out of bounds for array '" + this.ident + "'");
         }
         if (typeof(value) == this.type) {
             this.values[index] = value;
         }
         else {
-            throw new Error('Type mismatch for array: ' + this.ident);
+            throw new Error("Type mismatch for array '" + this.ident + "'");
         }
     }
 
     get(index) {
         if (index < this.lower || index > this.upper) {
-            throw new Error('Index out of bounds');
+            throw new Error("Index '" + index + "' out of bounds for array '" + this.ident + "'");
+        }
+        if (this.values[index] == null) {
+            throw new Error("Array '" + this.ident + "' is not initialized");
         }
         return this.values[index];
     }

@@ -8,12 +8,16 @@
 
     <link rel="stylesheet" href="/theme/index.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@4.5.0/css/xterm.css">
+    <link rel="stylesheet" href="https://unpkg.com/vue-draggable-resizable@2.3.0/dist/VueDraggableResizable.css">
+
 	<script src="https://cdn.jsdelivr.net/npm/xterm@4.5.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/g/filesaver.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.6.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.3.0/lib/xterm-addon-fit.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
+    <!-- dam, got the wrong cdn for vue resizable, wasted such a lonf time -->
+    <script src="https://unpkg.com/vue-draggable-resizable@2.3.0/dist/VueDraggableResizable.umd.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.10/index.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/monaco-editor/0.23.0/min/vs/loader.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/monaco-editor/0.23.0/min/vs/loader.min.js"></script> 
 
     <style>
         .el-textarea>textarea {
@@ -26,6 +30,11 @@
         #app,
         .el-container,
         .el-main>div {
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        .el-footer>div {
             height: 100%;
             max-height: 100%;
             overflow: hidden;
@@ -99,8 +108,15 @@
                     <div ref="editor" class="main"></div>
                 </el-main>
             </el-container>
-            <el-footer height="300px">
+            <el-footer height="250px">
+                <!-- <vue-draggable-resizable
+                :parent="false"
+                :draggable="true"
+                :resizable="true"
+                :handles="['tm', 'bm']"
+                @resizing="resize_terminal"> -->
                 <div ref="terminal"></div>
+                <!-- </vue-draggable-resizable> -->
             </el-footer>
         </el-container>
     </div>
