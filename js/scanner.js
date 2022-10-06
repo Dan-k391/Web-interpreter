@@ -99,7 +99,6 @@ class Scanner {
                     value += char;
                     char = line[++current];
                 }
-
                 tokens.push({ type: 'number', value: value, line: this.current_line, start_column: current - value.length, end_column: current });
                 continue;
             }
@@ -112,7 +111,7 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated string', this.current_line, current - value.length - 2, current);
+                    throw new Error('Unterminated string', this.current_line, current - value.length - 1, current);
                 }
                 else {
                     current++;
@@ -128,10 +127,10 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated char', this.current_line, current - value.length - 2, current);
+                    throw new Error('Unterminated char', this.current_line, current - value.length - 1, current);
                 }
                 else if (value.length > 1) {
-                    throw new Error('Char must be a single character', this.current_line, current - value.length - 2, current);
+                    throw new Error('Char must be a single character', this.current_line, current - value.length - 1, current);
                 }
                 else {
                     current++;

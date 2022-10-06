@@ -38,7 +38,8 @@ class Parser {
         let start_column = this.tokens[this.current]['start_column'];
         let end_column = this.tokens[this.current]['end_column'];
         let value = this.tokens[this.current]['value'];
-        throw new Error(msg + " value: '" + value + "'", line, start_column, end_column);
+        let type = this.tokens[this.current]['type'];
+        throw new Error(msg + " (type '" + type + "', value: '" + value + "')", line, start_column, end_column);
     }
 
     parse() {
