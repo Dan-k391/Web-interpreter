@@ -38,7 +38,7 @@ class Parser {
         let start_column = this.tokens[this.current]['start_column'];
         let end_column = this.tokens[this.current]['end_column'];
         let value = this.tokens[this.current]['value'];
-        throw new Error(msg + ' (line: ' + line + ', column: ' + start_column + ', value: ' + value + ')', line, start_column, end_column);
+        throw new Error(msg + " value: '" + value + "'", line, start_column, end_column);
     }
 
     parse() {
@@ -64,11 +64,14 @@ class Parser {
                 return current_value;
             }
             if (throw_error)
-                this.report_error("Expected token with type: '" + type + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')');
+                this.report_error("Expected token with type: '" + type + "', Got token");
             return null;
         }
-        if (throw_error)
-            this.report_error("Expected token with type: '" + type + "', Got end of file");
+        if (throw_error) {
+            // report the last token as error, otherwise the program will read undefined
+            this.current--;
+            this.report_error("Expected token with type: '" + type + "', Got EOF");
+        }
         return null;
     }
 
@@ -82,16 +85,31 @@ class Parser {
                 return current_value;
             }
             if (throw_error)
-                this.report_error("Expected token with value: '" + value + "', Got token" + '(type: ' + current_type + ', value:' + current_value + ')');
+                this.report_error("Expected token with value: '" + value + "', Got token");
             return null;
         }
-        if (throw_error)
+        if (throw_error) {
+            // report the last token as error, otherwise the program will read undefined
+            this.current--;
             this.report_error("Expected token with value: '" + value + "', Got end of file");
+        }
         return null;
     }
 
     peek_type() {
-        return this.tokens[this.current]['type'];
+        if (this.current < this.tokens.length) {
+            return this.tokens[this.current]['type'];
+        }
+        this.current--;
+        this.report_error('Unexpected end of file');
+    }
+
+    peek_value() {
+        if (this.current < this.tokens.length) {
+            return this.tokens[this.current]['value'];
+        }
+        this.current--;
+        this.report_error('Unexpected end of file');
     }
 
     parse_stmt() {
@@ -207,8 +225,8 @@ class Parser {
 
     parse_primary() {
         // preform this.current++ in the if statements for correct error msg
-        let current_type = this.tokens[this.current]['type'];
-        let current_value = this.tokens[this.current]['value'];
+        let current_type = this.peek_type();
+        let current_value = this.peek_value();
         if (this.expect_type('boolean', false)) {
             return new BoolAST(current_value);
         }

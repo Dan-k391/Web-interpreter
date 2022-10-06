@@ -89,7 +89,7 @@ class Scanner {
                 while (current < line.length) {
                     if (char == '.') {
                         if (dot) {
-                            throw new Error('Invalid number', this.current_line, current + 1);
+                            throw new Error('Invalid number', this.current_line, current - value.length, current);
                         }
                         dot = true;
                     }
@@ -112,7 +112,7 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated string', this.current_line, current + 1);
+                    throw new Error('Unterminated string', this.current_line, current - value.length - 2, current);
                 }
                 else {
                     current++;
@@ -128,10 +128,10 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated char', this.current_line, current + 1);
+                    throw new Error('Unterminated char', this.current_line, current - value.length - 2, current);
                 }
                 else if (value.length > 1) {
-                    throw new Error('Char must be a single character', this.current_line, current + 1);
+                    throw new Error('Char must be a single character', this.current_line, current - value.length - 2, current);
                 }
                 else {
                     current++;
@@ -139,7 +139,7 @@ class Scanner {
                 }
             }
             else {
-                throw new Error('Unexpected character', this.current_line, current + 1);
+                throw new Error('Unexpected character', this.current_line, current, current + 1);
             }
         }
         return tokens;
