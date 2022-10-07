@@ -1,6 +1,7 @@
 import { Environment } from './environment.js';
 import { Variable } from './variable.js';
 import { Error } from './error.js';
+import { Return } from './function.js';
 
 
 class Procedure {
@@ -12,10 +13,9 @@ class Procedure {
      * @param {string} type
      * @param {array(stmt)} body 
      */
-    constructor(ident, params, type, body) {
+     constructor(ident, params, body) {
         this.ident = ident;
         this.params = params;
-        this.type = type;
         this.body = body;
     }
 
@@ -38,6 +38,16 @@ class Procedure {
             else if (param.type == 'BOOLEAN') {
                 param_type = 'boolean';
             }
+            else if (param.type == 'ARRAY') {
+                // stupid way
+                if (Array.isArray(arg)) {
+                    env.declare_array(param['id'], arg);
+                    let index = 0;
+                    for (let item of arg) {
+                        env.declare_array(param['id'], typeof(item));
+                    }
+                }
+            }
 
             if (typeof(arg) == param_type) {
                 // declare then set...
@@ -45,17 +55,22 @@ class Procedure {
                 env.set_variable(param['id'], arg);
             }
             else
-                throw new Error('Type mismatch in argument ' + param['id'] + ' of function ' + this.ident);
+                throw new Error("Type mismatch in argument '" + param['id'] + "' of procedure '" + this.ident + "'");
         }
         for (let node of this.body) {
-            node.evaluate(env);
+            try {
+                // The object env is passed by reference
+                node.evaluate(env);
+            }
+            catch (e) {
+                if (e instanceof Return) {
+                    throw new Error("Procedure cannot contain return statement: '" + this.ident + "'");
+                }
+                else {
+                    throw e;
+                }
+            }
         }
-    }
-}
-
-class Return {
-    constructor(value) {
-        this.value = value;
     }
 }
 

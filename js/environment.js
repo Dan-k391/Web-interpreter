@@ -1,6 +1,7 @@
 import { Variable } from './variable.js';
 import { Array } from './array.js';
 import { Function } from './function.js';
+import { Procedure } from './procedure.js';
 import { Error } from './error.js';
 
 
@@ -11,6 +12,7 @@ class Environment {
         this.variables = {};
         this.arrays = {};
         this.functions = {};
+        this.procedures = {};
     }
 
     declare_variable(name, type) {
@@ -33,6 +35,13 @@ class Environment {
             throw new Error('Function already declared: ' + name);
         }
         this.functions[name] = new Function(name, params, type, body);
+    }
+
+    define_procedure(name, params, body) {
+        if (name in this.procedures) {
+            throw new Error('Procedure already declared: ' + name);
+        }
+        this.procedures[name] = new Procedure(name, params, body);
     }
 
     set_variable(name, value) {
@@ -91,7 +100,19 @@ class Environment {
             return this.enclosing.get_function(name);
         }
         else {
-            throw new Error("Function '" + name + "' not found");
+            throw new Error("Use of undefined Function '" + name + "'");
+        }
+    }
+
+    get_procedure(name) {
+        if (name in this.procedures) {
+            return this.procedures[name];
+        }
+        else if (this.enclosing != null) {
+            return this.enclosing.get_procedure(name);
+        }
+        else {
+            throw new Error("Use of undefined Procedure '" + name + "'");
         }
     }
 }

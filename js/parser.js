@@ -3,6 +3,7 @@
 import { 
     ProgramAST,
     FuncDefAST,
+    ProcDefAST,
     ReturnAST,
     VarDeclAST,
     ArrDeclAST,
@@ -13,7 +14,8 @@ import {
     ForAST,
     VarExprAST,
     ArrExprAST,
-    CallExprAST,
+    CallFuncExprAST,
+    CallProcExprAST,
     UnaryExprAST,
     BinaryExprAST,
     RndExprAST,
@@ -113,12 +115,24 @@ class Parser {
         this.report_error('Unexpected end of file');
     }
 
+    peek_second_value() {
+        if (this.current + 1 < this.tokens.length) {
+            return this.tokens[this.current + 1]['value'];
+        }
+        this.current--;
+        this.report_error('Unexpected end of file');
+    }
+
     parse_stmt() {
         let next_type = this.peek_type();
         
-        if (next_type == 'function') {
+        if (next_type == 'function') 
             return this.func_def();
-        }
+        else if (next_type == 'procedure')
+            return this.proc_def();
+        else if (next_type == 'identifier' && this.peek_second_value() == '(')
+            // call function expr will be handled uniquely
+            return this.parse_expr();
         else if (next_type == 'declare')
             // variable and array declaration
             return this.decl();
@@ -134,7 +148,7 @@ class Parser {
         else if (next_type == 'return')
             return this.return_statement();
         else if (next_type == 'call')
-            // call expr will be handled uniquely
+            // call expr procedure will be handled uniquely
             return this.parse_expr();
         else if (next_type == 'output')
             return this.output();    
@@ -238,11 +252,31 @@ class Parser {
             return new StringAST(current_value);
         }
         else if (this.expect_type('identifier', false)) {
-            let ex_lpar = this.expect_value('[', false);
-            if (ex_lpar) {
+            let ex_lbrac = this.expect_value('[', false);
+            if (ex_lbrac) {
                 let index = this.parse_expr();
                 this.expect_value(']');
                 return new ArrExprAST(current_value, index);
+            }
+            else {
+                let ex_lpar = this.expect_value('(', false);
+                if (ex_lpar) {
+                    let args = [];
+                    let ex_rpar = this.expect_value(')', false);
+                    while (!ex_rpar) {
+                        let arg = this.parse_expr();
+                        args.push(arg);
+                        let ex_comma = this.expect_value(',', false);
+
+                        ex_rpar = this.expect_value(')', false);
+
+                        if (!ex_comma)
+                            break;
+                    }
+                    if (ex_lpar && ex_rpar) {
+                        return new CallFuncExprAST(current_value, args);
+                    }
+                }
             }
             return new VarExprAST(current_value);
         }
@@ -265,7 +299,7 @@ class Parser {
                     break;
             }
             if (ex_ident && ex_lpar && ex_rpar)
-                return new CallExprAST(ex_ident, args);
+                return new CallProcExprAST(ex_ident, args);
         }
         // parse rnd into an expr ast
         else if (this.expect_type('rnd', false)) {
@@ -339,6 +373,44 @@ class Parser {
         }
         if (ex_func && ex_ident && ex_lpar && ex_rpar && ex_returns && ex_type && ex_endfunc)
             return new FuncDefAST(ex_ident, ex_params, ex_type, ex_body)
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
+    }
+
+    proc_def() {
+        /**
+         * proc_def -> procedure identifier body endprocedure
+         */
+        let ex_proc = this.expect_type('procedure');
+        let ex_ident = this.expect_type('identifier');
+        let ex_lpar = this.expect_value('(');
+        let ex_params = [];
+        let ex_rpar = this.expect_value(')', false);
+        while (!ex_rpar) {
+            let ex_ident = this.expect_type('identifier');
+            let ex_colon = this.expect_value(':');
+            let ex_type = this.expect_type('type');
+            // param : { id: id, type: type }
+            if (ex_ident && ex_colon && ex_type)
+                ex_params.push({ id: ex_ident, type: ex_type });
+            let ex_comma = this.expect_value(',', false);
+            ex_rpar = this.expect_value(')', false);
+
+            if (!ex_comma)
+                break;
+        }
+        let ex_body = [];
+        let ex_endproc = this.expect_type('endprocedure', false);
+        while (!ex_endproc) {
+            let node = this.parse_stmt();
+            
+            if (node == null)
+                return null;
+
+            ex_body.push(node);
+            ex_endproc = this.expect_type('endprocedure', false);
+        }
+        if (ex_proc && ex_ident && ex_lpar && ex_rpar && ex_endproc)
+            return new ProcDefAST(ex_ident, ex_params, ex_body)
         this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 

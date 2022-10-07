@@ -55,7 +55,7 @@ class Function {
                 env.set_variable(param['id'], arg);
             }
             else
-                throw new Error('Type mismatch in argument ' + param['id'] + ' of function ' + this.ident);
+                throw new Error("Type mismatch in argument '" + param['id'] + "' of function '" + this.ident + "'");
         }
         for (let node of this.body) {
             try {
@@ -67,14 +67,14 @@ class Function {
                     if (typeof(e.value) == this.type) {
                         return e.value;
                     }
-                    throw new Error('Type mismatch in return value of function ' + this.ident);
+                    throw new Error("Type mismatch in return value of function: '" + this.ident + "'");
                 }
                 else {
                     throw e;
                 }
             }
         }
-        throw new Error('Function must contain one return statement');
+        throw new Error("Function '" + this.ident + "' does not return a value");
     }
 }
 

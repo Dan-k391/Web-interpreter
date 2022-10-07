@@ -1,0 +1,9 @@
+DECLARE a:INTEGER
+a <- 8
+
+PROCEDURE i()
+    a <- 9
+ENDPROCEDURE
+
+CALL i()
+OUTPUT a

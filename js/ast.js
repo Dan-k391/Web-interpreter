@@ -67,6 +67,28 @@ class FuncDefAST {
     }
 }
 
+class ProcDefAST {
+    constructor(ident, params, body) {
+        this.ident = ident;
+        this.params = params;
+        this.body = body;
+    }
+
+    evaluate(env) {
+        env.define_procedure(this.ident, this.params, this.body);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'ProcDefAST: ' + this.ident);
+        for (let param of this.params) {
+            param.dump(prefix + '  ');
+        }
+        for (let node of this.body) {
+            node.dump(prefix + '  ');
+        }
+    }
+}
+
 class ReturnAST {
     constructor(expr) {
         this.expr = expr;
@@ -309,7 +331,7 @@ class ArrExprAST {
 }
 
 
-class CallExprAST {
+class CallFuncExprAST {
     constructor(ident, args) {
         this.ident = ident;
         this.args = args;
@@ -327,6 +349,34 @@ class CallExprAST {
             return func.call(env, args);
         }
         throw new Error("Function '" + this.ident + "' expects " + func.params.length + " arguments");
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'CallFuncExprAST: ' + this.ident);
+        for (let arg of this.args) {
+            arg.dump(prefix + '  ');
+        }
+    }
+}
+
+
+class CallProcExprAST {
+    constructor(ident, args) {
+        this.ident = ident;
+        this.args = args;
+    }
+
+    evaluate(env) {
+        let proc = env.get_procedure(this.ident);
+        let args = [];
+        for (let arg of this.args) {
+            let value = arg.evaluate(env);
+            args.push(value);
+        }
+        if (args.length == proc.arity()) {
+            return proc.call(env, args);
+        }
+        throw new Error("Procedure '" + this.ident + "' expects " + proc.params.length + " arguments");
     }
 
     dump(prefix) {
@@ -541,6 +591,7 @@ class OutputAST {
 export {
     ProgramAST,
     FuncDefAST,
+    ProcDefAST,
     ReturnAST,
     VarDeclAST,
     ArrDeclAST,
@@ -551,7 +602,8 @@ export {
     ForAST,
     VarExprAST,
     ArrExprAST,
-    CallExprAST,
+    CallFuncExprAST,
+    CallProcExprAST,
     UnaryExprAST,
     BinaryExprAST,
     RndExprAST,
