@@ -1,6 +1,7 @@
 import { Environment } from './environment.js';
 import { Variable } from './variable.js';
 import { Error } from './error.js';
+import { type_of } from './type.js';
 
 
 class Function {
@@ -23,39 +24,27 @@ class Function {
         return this.params.length;
     }
 
+    /**
+     * 
+     * @param {Environment} g_env global environment
+     * @param {} args 
+     * @returns 
+     */
     call(g_env, args) {
         let env = new Environment(g_env);
         for (let i = 0; i < this.params.length; i++) {
             let param = this.params[i];
             let arg = args[i];
-            let param_type;
-            if (param.type == 'INTEGER' || param.type == 'REAL') {
-                param_type = 'number';
-            }
-            else if (param.type == 'STRING' || param.type == 'CHAR') {
-                param_type = 'string';
-            }
-            else if (param.type == 'BOOLEAN') {
-                param_type = 'boolean';
-            }
-            else if (param.type == 'ARRAY') {
-                // stupid way
-                if (Array.isArray(arg)) {
-                    env.declare_array(param['id'], arg);
-                    let index = 0;
-                    for (let item of arg) {
-                        env.declare_array(param['id'], typeof(item));
-                    }
-                }
-            }
+            let param_type = param.type.toLowerCase();
 
-            if (typeof(arg) == param_type) {
+            if (type_of(arg) == param_type) {
                 // declare then set...
                 env.declare_variable(param['id'], param_type);
                 env.set_variable(param['id'], arg);
             }
-            else
+            else {
                 throw new Error("Type mismatch in argument '" + param['id'] + "' of function '" + this.ident + "'");
+            }
         }
         for (let node of this.body) {
             try {
@@ -64,7 +53,7 @@ class Function {
             }
             catch (e) {
                 if (e instanceof Return) {
-                    if (typeof(e.value) == this.type) {
+                    if (type_of(e.value) == this.type) {
                         return e.value;
                     }
                     throw new Error("Type mismatch in return value of function: '" + this.ident + "'");

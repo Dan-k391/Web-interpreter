@@ -1,4 +1,5 @@
 import { Error } from './error.js';
+import { type_of } from './type.js';
 
 
 class Array {
@@ -14,7 +15,7 @@ class Array {
         if (index < this.lower || index > this.upper) {
             throw new Error("Index '" + index + "' out of bounds for array '" + this.ident + "'");
         }
-        if (typeof(value) == this.type) {
+        if (type_of(value) == this.type) {
             this.values[index] = value;
         }
         else {

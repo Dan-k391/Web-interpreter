@@ -7,13 +7,17 @@ import {
     ReturnAST,
     VarDeclAST,
     ArrDeclAST,
+    TypeDefAST,
+    TypeVarDeclAST,
     VarAssignAST,
     ArrAssignAST,
+    TypeVarAssignAST,
     IfAST,
     WhileAST,
     ForAST,
     VarExprAST,
     ArrExprAST,
+    TypeVarExprAST,
     CallFuncExprAST,
     CallProcExprAST,
     UnaryExprAST,
@@ -22,7 +26,8 @@ import {
     NumberAST,
     StringAST,
     BoolAST,
-    OutputAST
+    OutputAST,
+    InputAST
 } from './ast.js';
 import { Error } from './error.js';
 
@@ -36,6 +41,7 @@ class Parser {
     }
 
     report_error(msg) {
+        console.log(this,this.current);
         let line = this.tokens[this.current]['line'];
         let start_column = this.tokens[this.current]['start_column'];
         let end_column = this.tokens[this.current]['end_column'];
@@ -119,19 +125,18 @@ class Parser {
         if (this.current + 1 < this.tokens.length) {
             return this.tokens[this.current + 1]['value'];
         }
-        this.current--;
         this.report_error('Unexpected end of file');
     }
 
     parse_stmt() {
         let next_type = this.peek_type();
-        
+
         if (next_type == 'function') 
             return this.func_def();
         else if (next_type == 'procedure')
             return this.proc_def();
         else if (next_type == 'identifier' && this.peek_second_value() == '(')
-            // call function expr will be handled uniquely
+            // call function expr and typevar expr will be handled uniquely
             return this.parse_expr();
         else if (next_type == 'declare')
             // variable and array declaration
@@ -150,9 +155,12 @@ class Parser {
         else if (next_type == 'call')
             // call expr procedure will be handled uniquely
             return this.parse_expr();
+        else if (next_type == 'type')
+            return this.type_def();
         else if (next_type == 'output')
-            return this.output();    
-        this.report_error("Unexpected token: '" + next_type + "'");
+            return this.output();
+        else if (next_type == 'input')
+            return this.input();
     }
 
     parse_expr() {
@@ -252,13 +260,22 @@ class Parser {
             return new StringAST(current_value);
         }
         else if (this.expect_type('identifier', false)) {
+            let ex_dot = this.expect_value('.', false);
+            if (ex_dot) {
+                let ex_var_name = this.expect_type('identifier');
+                if (ex_var_name)
+                    return new TypeVarExprAST(current_value, ex_var_name);
+            }
+            // check if it is a array
             let ex_lbrac = this.expect_value('[', false);
             if (ex_lbrac) {
                 let index = this.parse_expr();
-                this.expect_value(']');
-                return new ArrExprAST(current_value, index);
+                let ex_rbrac = this.expect_value(']');
+                if (ex_lbrac && ex_rbrac)
+                    return new ArrExprAST(current_value, index);
             }
             else {
+                // check if it is a function call
                 let ex_lpar = this.expect_value('(', false);
                 if (ex_lpar) {
                     let args = [];
@@ -333,6 +350,14 @@ class Parser {
         }
         if (ex_output && ex_exprs)
             return new OutputAST(ex_exprs);
+        return null;
+    }
+
+    input() {
+        let ex_input = this .expect_type('input');
+        let ex_ident = this.expect_type('identifier');
+        if (ex_input && ex_ident)
+            return new InputAST(ex_ident);
         return null;
     }
 
@@ -432,6 +457,10 @@ class Parser {
         let ex_type = this.expect_type('type', false);
         if (ex_decl && ex_ident && ex_colon && ex_type)
             return new VarDeclAST(ex_ident, ex_type);
+        // check if it is a declaration of an typevar
+        ex_type = this.expect_type('identifier', false);
+        if (ex_decl && ex_ident && ex_colon && ex_type)
+            return new TypeVarDeclAST(ex_ident, ex_type);
         let ex_arr = this.expect_type('array');
         let ex_lpar = this.expect_value('[');
         // array bug, brugh
@@ -446,11 +475,43 @@ class Parser {
         this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
+    type_def() {
+        /**
+         * type_def -> type ident declstmt_list endtype
+         */
+        let ex_type = this.expect_type('type');
+        let ex_ident = this.expect_type('identifier');
+        let ex_body = [];
+        let ex_endtype = this.expect_type('endtype', false);
+        while (!ex_endtype) {
+            let node = this.parse_stmt();
+            
+            if (node instanceof VarDeclAST)
+                ex_body.push(node);
+            else
+                this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
+
+            ex_endtype = this.expect_type('endtype', false);
+        }
+        if (ex_type && ex_ident && ex_endtype)
+            return new TypeDefAST(ex_ident, ex_body);
+        this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
+    }
+
     assign() {
         /**
          * assign -> identifier '<-' expr | identifier '[' expr ']' '<-' expr
          */
         let ex_ident = this.expect_type('identifier');
+        let ex_dot = this.expect_value('.', false);
+        if (ex_dot) {
+            // ex_var_name is the field
+            let ex_var_name = this.expect_type('identifier');
+            let ex_op = this.expect_value('<-');
+            let ex_expr = this.parse_expr();
+            if (ex_ident && ex_dot && ex_var_name && ex_op && ex_expr)
+                return new TypeVarAssignAST(ex_ident, ex_var_name, ex_expr);
+        }
         let ex_lpar = this.expect_value('[', false);
         if (ex_lpar) {
             let ex_index = this.parse_expr();

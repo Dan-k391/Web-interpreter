@@ -3,13 +3,13 @@ import { Error } from "./error.js";
 
 const WHITESPACE = /\s/;
 const NUMBERS = /[0-9]/;
-const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,&]/;
+const SINGLEOPERATORS = /[+\-*/()\[\]=<>:,&.]/;
 const DOUBLEOPERATORS = ['<-', '<=', '>=', '<>'];
 const LETTERS = /[a-z]/i;
 const BOOLEANS = ['TRUE', 'FALSE'];
 // built-in functions are also combined in KEYWORDS
 const KEYWORDS = ['FUNCTION', 'ENDFUNCTION', 'PROCEDURE', 'ENDPROCEDURE', 'RETURNS', 'RETURN', 'CALL',
-                  'DECLARE', 'ARRAY', 'OF',
+                  'DECLARE', 'ARRAY', 'OF', 'TYPE', 'ENDTYPE',
                   'IF', 'THEN', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'MOD', 'AND', 'OR', 'NOT',
                   'OUTPUT', 'INPUT', 'RND'];
 const TYPES = ['INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN'];

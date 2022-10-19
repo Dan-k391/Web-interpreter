@@ -29,7 +29,7 @@ class ProgramAST {
 class FuncDefAST {
     /**
      * 
-     * @param {string} ident 
+     * @param {string} ident
      * @param {array(param)} params 
      * param {id: id, type: type}
      * @param {string} type 
@@ -38,15 +38,7 @@ class FuncDefAST {
     constructor(ident, params, type, body) {
         this.ident = ident;
         this.params = params;
-        if (type == 'INTEGER' || type == 'REAL') {
-            this.type = 'number';
-        }
-        else if (type == 'STRING' || type == 'CHAR') {
-            this.type = 'string';
-        }
-        else if (type == 'BOOLEAN') {
-            this.type = 'boolean';
-        }
+        this.type = type.toLowerCase();
         this.body = body;
     }
 
@@ -110,15 +102,7 @@ class ReturnAST {
 class VarDeclAST {
     constructor(ident, type) {
         this.ident = ident;
-        if (type == 'INTEGER' || type == 'REAL') {
-            this.type = 'number';
-        }
-        else if (type == 'STRING' || type == 'CHAR') {
-            this.type = 'string';
-        }
-        else if (type == 'BOOLEAN') {
-            this.type = 'boolean';
-        }
+        this.type = type.toLowerCase();
     }
 
     evaluate(env) {
@@ -134,15 +118,7 @@ class VarDeclAST {
 class ArrDeclAST {
     constructor(ident, type, lower, upper) {
         this.ident = ident;
-        if (type == 'INTEGER' || type == 'REAL') {
-            this.type = 'number';
-        }
-        else if (type == 'STRING' || type == 'CHAR') {
-            this.type = 'string';
-        }
-        else if (type == 'BOOLEAN') {
-            this.type = 'boolean';
-        }
+        this.type = type.toLowerCase();
         this.lower = lower;
         this.upper = upper;
     }
@@ -161,6 +137,40 @@ class ArrDeclAST {
     }
 }
 
+class TypeDefAST {
+    constructor(ident, body) {
+        this.ident = ident;
+        // body is already [VarDeclAST]
+        this.body = body;
+    }
+
+    evaluate(env) {
+        env.define_type(this.ident, this.body);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeDefAST ' + this.ident);
+        for (let node of this.body) {
+            node.dump(prefix + '  ');
+        }
+    }
+}
+
+class TypeVarDeclAST {
+    constructor(ident, type) {
+        this.ident = ident;
+        // type is the name of the type
+        this.type = type;
+    }
+
+    evaluate(env) {
+        env.declare_typevar(this.ident, this.type);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeVarDeclAST ' + this.ident + ' ' + this.type);
+    }
+}
 
 class VarAssignAST {
     constructor(ident, expr) {
@@ -196,6 +206,24 @@ class ArrAssignAST {
     dump(prefix) {
         app.terminal.writeln(prefix + 'ArrAssignAST: ' + this.ident);
         this.index.dump(prefix + '  ');
+        this.expr.dump(prefix + '  ');
+    }
+}
+
+class TypeVarAssignAST {
+    constructor(ident, var_name, expr) {
+        this.ident = ident;
+        this.var_name = var_name;
+        this.expr = expr;
+    }
+
+    evaluate(env) {
+        let value = this.expr.evaluate(env);
+        env.set_typevar(this.ident, this.var_name, value);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeVarAssignAST: ' + this.ident + ' ' + this.var_name);
         this.expr.dump(prefix + '  ');
     }
 }
@@ -330,6 +358,20 @@ class ArrExprAST {
     }
 }
 
+class TypeVarExprAST {
+    constructor(ident, var_name) {
+        this.ident = ident;
+        this.var_name = var_name;
+    }
+
+    evaluate(env) {
+        return env.get_typevar(this.ident, this.var_name);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeVarExprAST: ' + this.ident + ' ' + this.var_name);
+    }
+}
 
 class CallFuncExprAST {
     constructor(ident, args) {
@@ -588,6 +630,24 @@ class OutputAST {
     }
 }
 
+class InputAST {
+    // Not usable yet
+    constructor(ident) {
+        this.ident = ident;
+    }
+
+    evaluate(env) {
+        let value = prompt('Input value for ' + this.ident);
+        if (value)
+            env.set_variable(this.ident, value);
+        throw new Error('Cannot input a empty value');
+    }
+    
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'InputAST: ' + this.ident);
+    }
+}
+
 export {
     ProgramAST,
     FuncDefAST,
@@ -595,13 +655,17 @@ export {
     ReturnAST,
     VarDeclAST,
     ArrDeclAST,
+    TypeDefAST,
+    TypeVarDeclAST,
     VarAssignAST,
     ArrAssignAST,
+    TypeVarAssignAST,
     IfAST,
     WhileAST,
     ForAST,
     VarExprAST,
     ArrExprAST,
+    TypeVarExprAST,
     CallFuncExprAST,
     CallProcExprAST,
     UnaryExprAST,
@@ -610,5 +674,6 @@ export {
     NumberAST,
     StringAST,
     BoolAST,
-    OutputAST
+    OutputAST,
+    InputAST
 }

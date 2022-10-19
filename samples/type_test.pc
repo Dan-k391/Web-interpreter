@@ -1,0 +1,11 @@
+TYPE Daniel
+    DECLARE i:INTEGER
+    DECLARE j:INTEGER
+ENDTYPE
+
+DECLARE j:Daniel
+
+j.i <- 9
+j.j <- 8
+
+OUTPUT j.j

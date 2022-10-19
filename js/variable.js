@@ -1,4 +1,7 @@
 import { Error } from './error.js';
+import { type_of } from './type.js';
+import { Environment } from './environment.js';
+
 
 class Variable {
     constructor(ident, type, value = null) {
@@ -8,7 +11,7 @@ class Variable {
     }
 
     assign(value) {
-        if (typeof(value) == this.type) {
+        if (type_of(value) == this.type) {
             this.value = value;
         }
         else {
@@ -24,6 +27,18 @@ class Variable {
     }
 }
 
+class TypeVar {
+    constructor(ident, type) {
+        this.ident = ident;
+        this.type = type;
+
+        // the core is this environment
+        this.env = new Environment();
+        this.type.create(this.env);
+    }
+}
+
 export {
-    Variable
+    Variable,
+    TypeVar
 }

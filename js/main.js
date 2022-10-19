@@ -17,7 +17,9 @@ var app = new Vue({
         terminal: null,
         fit_addon: null,
         markers: [],
-        cmd: ''
+        cmd: '',
+        do_input: false,
+        input_data: ''
     },
     mounted() {
         require.config({ paths: { 'vs': 'https://cdn.bootcdn.net/ajax/libs/monaco-editor/0.23.0/min/vs' } });
@@ -48,7 +50,7 @@ var app = new Vue({
                         [/".*?"/, 'string'],
                         [/'.?'/, 'char'],
                         [/\d+/, 'number'],
-                        [/[+\-*/()\[\]=<>:,&]/, 'operators'],
+                        [/[+\-*/()\[\]=<>:,&.]/, 'operators'],
                     ]
                 }
             });
@@ -167,6 +169,7 @@ var app = new Vue({
                 if (ast != null) {
                     // this.terminal.writeln('Parsing completed');
                     this.dumpast ? ast.dump('') : null;
+                    this.do_input = true;
                     let start = new Date().getTime();
                     try {
                         // Define the global environment
@@ -179,6 +182,7 @@ var app = new Vue({
                         return;
                     }
                     let end = new Date().getTime();
+                    this.do_input = false;
                     let time = end - start;
                     this.terminal.writeln('Execution completed in ' + time + 'ms');
                 }
@@ -187,27 +191,32 @@ var app = new Vue({
             }
         },
         execute_cmd() {
-            if (this.cmd == 'help') {
-                this.terminal.writeln('help: show help');
-                this.terminal.writeln('run: run the code');
-                this.terminal.writeln('clear/cls: clear the terminal');
-                this.terminal.write(this.prefix);
-            }
-            else if (this.cmd == 'run') {
-                this.run();
-            }
-            else if (this.cmd == 'clear' || this.cmd == 'cls') {
-                this.terminal.clear();
-                this.terminal.write(this.prefix);
-            }
-            else if (this.cmd == 'egg') {
-                this.terminal.writeln('An egg? Maybe...');
-                this.terminal.write(this.prefix);
-                console.log('......');
+            if (this.do_input) {
+                this.input_data = this.cmd;
             }
             else {
-                this.terminal.writeln(this.cmd + ': Command not found');
-                this.terminal.write(this.prefix);
+                if (this.cmd == 'help') {
+                    this.terminal.writeln('help: show help');
+                    this.terminal.writeln('run: run the code');
+                    this.terminal.writeln('clear/cls: clear the terminal');
+                    this.terminal.write(this.prefix);
+                }
+                else if (this.cmd == 'run') {
+                    this.run();
+                }
+                else if (this.cmd == 'clear' || this.cmd == 'cls') {
+                    this.terminal.clear();
+                    this.terminal.write(this.prefix);
+                }
+                else if (this.cmd == 'egg') {
+                    this.terminal.writeln('An egg? Maybe...');
+                    this.terminal.write(this.prefix);
+                    console.log('......');
+                }
+                else {
+                    this.terminal.writeln(this.cmd + ': Command not found');
+                    this.terminal.write(this.prefix);
+                }
             }
         },
         resize_terminal() {

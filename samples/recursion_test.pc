@@ -3,7 +3,7 @@ FUNCTION rec(i:INTEGER) RETURNS INTEGER
     IF i > 100 THEN
         RETURN i
     ENDIF
-    RETURN CALL rec(i + 1)
+    RETURN rec(i + 1)
 ENDFUNCTION
 
-OUTPUT CALL rec(1)
+OUTPUT rec(1)

@@ -1,12 +1,27 @@
+// TODO: Maybe support arrays in the future
+
 import { Error } from './error.js';
 
 
+class Type {
+    constructor(ident, body) {
+        this.ident = ident;
+        this.body = body;
+    }
+
+    create(env) {
+        for (let node of this.body) {
+            node.evaluate(env);
+        }
+    }
+}
+
 function type_of(value) {
     if (typeof(value) == 'number') {
-        if (String(num).indexOf('.') > -1)
-            return 'integer';
-        else
+        if (String(value).indexOf('.') > -1)
             return 'real';
+        else
+            return 'integer';
     }
     else if (typeof(value) == 'string') {
         return 'string';
@@ -14,4 +29,9 @@ function type_of(value) {
     else if (typeof(value) == 'boolean') {
         return 'boolean';
     }
+}
+
+export {
+    Type,
+    type_of
 }
