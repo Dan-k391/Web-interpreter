@@ -15,6 +15,7 @@ class Variable {
             this.value = value;
         }
         else {
+            // do not f**king delete this else, shit!!!
             throw new Error("Type mismatch for variable '" + this.ident + "'");
         }
     }
@@ -35,6 +36,15 @@ class TypeVar {
         // the core is this environment
         this.env = new Environment();
         this.type.create(this.env);
+    }
+
+    assign(var_name, value) {
+        console.log(this.env);
+        this.env.set_variable(var_name, value);
+    }
+
+    get(var_name) {
+        return this.env.get_variable(var_name);
     }
 }
 

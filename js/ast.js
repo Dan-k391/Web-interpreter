@@ -172,6 +172,25 @@ class TypeVarDeclAST {
     }
 }
 
+class TypeArrDeclAST {
+    constructor(ident, type, lower, upper) {
+        this.ident = ident;
+        this.type = type;
+        this.lower = lower;
+        this.upper = upper;
+    }
+
+    evaluate(env) {
+        let lower = this.lower.evaluate(env);
+        let upper = this.upper.evaluate(env);
+        env.declare_typearr(this.ident, this.type, lower, upper);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeArrDeclAST ' + this.ident + ' ' + this.type + ' ' + this.lower + '-' + this.upper);
+    }
+}
+
 class VarAssignAST {
     constructor(ident, expr) {
         this.ident = ident;
@@ -224,6 +243,27 @@ class TypeVarAssignAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'TypeVarAssignAST: ' + this.ident + ' ' + this.var_name);
+        this.expr.dump(prefix + '  ');
+    }
+}
+
+class TypeArrAssignAST {
+    constructor(ident, index, var_name, expr) {
+        this.ident = ident;
+        this.index = index;
+        this.var_name = var_name;
+        this.expr = expr;
+    }
+
+    evaluate(env) {
+        let index = this.index.evaluate(env);
+        let value = this.expr.evaluate(env);
+        env.set_typearr(this.ident, index, this.var_name, value);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeArrAssignAST: ' + this.ident + ' ' + this.var_name);
+        this.index.dump(prefix + '  ');
         this.expr.dump(prefix + '  ');
     }
 }
@@ -370,6 +410,24 @@ class TypeVarExprAST {
 
     dump(prefix) {
         app.terminal.writeln(prefix + 'TypeVarExprAST: ' + this.ident + ' ' + this.var_name);
+    }
+}
+
+class TypeArrExprAST {
+    constructor(ident, index, var_name) {
+        this.ident = ident;
+        this.index = index;
+        this.var_name = var_name;
+    }
+
+    evaluate(env) {
+        let index = this.index.evaluate(env);
+        return env.get_typearr(this.ident, index, this.var_name);
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TypeArrExprAST: ' + this.ident + ' ' + this.var_name);
+        this.index.dump(prefix + '  ');
     }
 }
 
@@ -657,15 +715,18 @@ export {
     ArrDeclAST,
     TypeDefAST,
     TypeVarDeclAST,
+    TypeArrDeclAST,
     VarAssignAST,
     ArrAssignAST,
     TypeVarAssignAST,
+    TypeArrAssignAST,
     IfAST,
     WhileAST,
     ForAST,
     VarExprAST,
     ArrExprAST,
     TypeVarExprAST,
+    TypeArrExprAST,
     CallFuncExprAST,
     CallProcExprAST,
     UnaryExprAST,

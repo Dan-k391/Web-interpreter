@@ -1,5 +1,7 @@
+// TODO: integrate the dicts together
+
 import { Variable, TypeVar } from './variable.js';
-import { Array } from './array.js';
+import { Array, TypeArray } from './array.js';
 import { Type } from './type.js';
 import { Function } from './function.js';
 import { Procedure } from './procedure.js';
@@ -14,6 +16,7 @@ class Environment {
         this.types = {}
         this.typevars = {}
         this.arrays = {};
+        this.typearrays = {};
         this.functions = {};
         this.procedures = {};
     }
@@ -46,6 +49,13 @@ class Environment {
         if (type in this.types) {
             this.typevars[name] = new TypeVar(name, this.types[type]);
         }
+    }
+
+    declare_typearr(name, type, lower, upper) {
+        if (name in this.typearrays) {
+            throw new Error('Type array already declared: ' + name);
+        }
+        this.typearrays[name] = new TypeArray(name, this.types[type], lower, upper);
     }
 
     // define function
@@ -89,13 +99,25 @@ class Environment {
 
     set_typevar(name, var_name, value) {
         if (name in this.typevars) {
-            this.typevars[name].env.set_variable(var_name, value);
+            this.typevars[name].assign(var_name, value);
         }
         else if (this.enclosing != null) {
             this.enclosing.set_typevar(name, var_name, value);
         }
         else {
             throw new Error("Use of undeclared Type Variable '" + name + "'");
+        }
+    }
+
+    set_typearr(name, index, var_name, value) {
+        if (name in this.typearrays) {
+            this.typearrays[name].assign(index, var_name, value);
+        }
+        else if (this.enclosing != null) {
+            this.enclosing.set_typearr(name, index, var_name, value);
+        }
+        else {
+            throw new Error("Use of undeclared Type Array '" + name + "'");
         }
     }
 
@@ -125,13 +147,25 @@ class Environment {
 
     get_typevar(name, var_name) {
         if (name in this.typevars) {
-            return this.typevars[name].env.get_variable(var_name);
+            return this.typevars[name].get(var_name);
         }
         else if (this.enclosing != null) {
             return this.enclosing.get_typevar(name, var_name);
         }
         else {
             throw new Error("Use of undeclared Type Variable '" + name + "'");
+        }
+    }
+
+    get_typearr(name, index, var_name) {
+        if (name in this.typearrays) {
+            return this.typearrays[name].get(index, var_name);
+        }
+        else if (this.enclosing != null) {
+            return this.enclosing.get_typearr(name, index, var_name);
+        }
+        else {
+            throw new Error("Use of undeclared Type Array '" + name + "'");
         }
     }
 

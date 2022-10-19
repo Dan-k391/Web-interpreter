@@ -9,15 +9,18 @@ import {
     ArrDeclAST,
     TypeDefAST,
     TypeVarDeclAST,
+    TypeArrDeclAST,
     VarAssignAST,
     ArrAssignAST,
     TypeVarAssignAST,
+    TypeArrAssignAST,
     IfAST,
     WhileAST,
     ForAST,
     VarExprAST,
     ArrExprAST,
     TypeVarExprAST,
+    TypeArrExprAST,
     CallFuncExprAST,
     CallProcExprAST,
     UnaryExprAST,
@@ -271,6 +274,12 @@ class Parser {
             if (ex_lbrac) {
                 let index = this.parse_expr();
                 let ex_rbrac = this.expect_value(']');
+                ex_dot = this.expect_value('.', false);
+                if (ex_dot) {
+                    let ex_var_name = this.expect_type('identifier');
+                    if (ex_lbrac && ex_rbrac && ex_var_name)
+                        return new TypeArrExprAST(current_value, index, ex_var_name);
+                }
                 if (ex_lbrac && ex_rbrac)
                     return new ArrExprAST(current_value, index);
             }
@@ -469,9 +478,12 @@ class Parser {
         let ex_upper = this.parse_expr();
         let ex_rpar = this.expect_value(']');
         let ex_of = this.expect_type('of');
-        ex_type = this.expect_type('type');
+        ex_type = this.expect_type('type', false);
         if (ex_decl && ex_ident && ex_colon && ex_arr && ex_lpar && ex_lower && ex_colon2 && ex_upper && ex_rpar && ex_of && ex_type)
             return new ArrDeclAST(ex_ident, ex_type, ex_lower, ex_upper);
+        ex_type = this.expect_type('identifier');
+        if (ex_decl && ex_ident && ex_colon && ex_arr && ex_lpar && ex_lower && ex_colon2 && ex_upper && ex_rpar && ex_of && ex_type)
+            return new TypeArrDeclAST(ex_ident, ex_type, ex_lower, ex_upper);
         this.report_error("Unexpected token: '" + this.tokens[this.current]['type'] + "'");
     }
 
@@ -516,6 +528,15 @@ class Parser {
         if (ex_lpar) {
             let ex_index = this.parse_expr();
             let ex_rpar = this.expect_value(']');
+            ex_dot = this.expect_value('.', false);
+            if (ex_dot) {
+                // ex_var_name is the field
+                let ex_var_name = this.expect_type('identifier');
+                let ex_op = this.expect_value('<-');
+                let ex_expr = this.parse_expr();
+                if (ex_ident && ex_lpar && ex_index && ex_rpar && ex_dot && ex_var_name && ex_op && ex_expr)
+                    return new TypeArrAssignAST(ex_ident, ex_index, ex_var_name, ex_expr);
+            }
             let ex_op = this.expect_value('<-');
             let ex_expr = this.parse_expr();
             if (ex_ident && ex_lpar && ex_index && ex_rpar && ex_op && ex_expr)
