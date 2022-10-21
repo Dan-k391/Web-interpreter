@@ -617,6 +617,19 @@ class RndExprAST {
     }
 }
 
+class TimeExprAST {
+    constructor() {
+    }
+
+    evaluate(env) {
+        return new Date().getTime();
+    }
+
+    dump(prefix) {
+        app.terminal.writeln(prefix + 'TimeExprAST');
+    }
+}
+
 class NumberAST {
     constructor(value) {
         this.value = Number(value);
@@ -732,6 +745,7 @@ export {
     UnaryExprAST,
     BinaryExprAST,
     RndExprAST,
+    TimeExprAST,
     NumberAST,
     StringAST,
     BoolAST,

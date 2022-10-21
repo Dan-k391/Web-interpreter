@@ -11,7 +11,7 @@ const BOOLEANS = ['TRUE', 'FALSE'];
 const KEYWORDS = ['FUNCTION', 'ENDFUNCTION', 'PROCEDURE', 'ENDPROCEDURE', 'RETURNS', 'RETURN', 'CALL',
                   'DECLARE', 'ARRAY', 'OF', 'TYPE', 'ENDTYPE',
                   'IF', 'THEN', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'MOD', 'AND', 'OR', 'NOT',
-                  'OUTPUT', 'INPUT', 'RND'];
+                  'OUTPUT', 'INPUT', 'RND', 'TIME'];
 const TYPES = ['INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN'];
 
 class Scanner {

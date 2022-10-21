@@ -26,6 +26,7 @@ import {
     UnaryExprAST,
     BinaryExprAST,
     RndExprAST,
+    TimeExprAST,
     NumberAST,
     StringAST,
     BoolAST,
@@ -333,6 +334,12 @@ class Parser {
             let ex_rpar = this.expect_value(')');
             if (ex_lpar && ex_rpar)
                 return new RndExprAST();
+        }
+        else if (this.expect_type('time', false)) {
+            let ex_lpar = this.expect_value('(');
+            let ex_rpar = this.expect_value(')');
+            if (ex_lpar && ex_rpar)
+                return new TimeExprAST();
         }
         else if (this.expect_value('(', false)) {
             let expr = this.parse_expr();
