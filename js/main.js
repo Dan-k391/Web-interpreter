@@ -29,13 +29,13 @@ var app = new Vue({
         }
     },
     mounted() {
-        // window.onbeforeunload = e => {
-        //     e = e || window.event
-        //     if (e) {
-        //         e.returnValue = '关闭提示'
-        //     }
-        //     return '关闭提示'
-        // }
+        window.onbeforeunload = e => {
+            e = e || window.event
+            if (e) {
+                e.returnValue = '关闭提示'
+            }
+            return '关闭提示'
+        }
 
         require.config({ paths: { 'vs': 'https://cdn.bootcdn.net/ajax/libs/monaco-editor/0.23.0/min/vs' } });
         window.MonacoEnvironment = {
