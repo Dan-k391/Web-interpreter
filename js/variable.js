@@ -1,4 +1,4 @@
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 import { type_of } from './type.js';
 import { Environment } from './environment.js';
 
@@ -16,13 +16,13 @@ class Variable {
         }
         else {
             // do not f**king delete this else, shit!!!
-            throw new Error("Type mismatch for variable '" + this.ident + "'");
+            throw new RuntimeError("Type mismatch for variable '" + this.ident + "'");
         }
     }
 
     get() {
         if (this.value == null) {
-            throw new Error("Variable '" + this.ident + "' is not initialized");
+            throw new RuntimeError("Variable '" + this.ident + "' is not initialized");
         }
         return this.value;
     }

@@ -1,4 +1,4 @@
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 import { type_of } from './type.js';
 import { Environment } from './environment.js';
 
@@ -53,14 +53,14 @@ class TypeArray {
 
     assign(index, var_name, value) {
         if (index < this.lower || index > this.upper) {
-            throw new Error("Index '" + index + "' out of bounds for array '" + this.ident + "'");
+            throw new RuntimeError("Index '" + index + "' out of bounds for array '" + this.ident + "'");
         }
         this.values[index].set_variable(var_name, value);
     }
 
     get(index, var_name) {
         if (index < this.lower || index > this.upper) {
-            throw new Error("Index '" + index + "' out of bounds for array '" + this.ident + "'");
+            throw new RuntimeError("Index '" + index + "' out of bounds for array '" + this.ident + "'");
         }
         return this.values[index].get_variable(var_name);
     }

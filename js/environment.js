@@ -5,7 +5,7 @@ import { Array, TypeArray } from './array.js';
 import { Type } from './type.js';
 import { Function } from './function.js';
 import { Procedure } from './procedure.js';
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 
 
 class Environment {
@@ -23,28 +23,28 @@ class Environment {
 
     declare_variable(name, type) {
         if (name in this.variables) {
-            throw new Error('Variable already declared: ' + name);
+            throw new RuntimeError('Variable already declared: ' + name);
         }
         this.variables[name] = new Variable(name, type);
     }
 
     declare_array(name, type, lower, upper) {
         if (name in this.arrays) {
-            throw new Error('Array already declared: ' + name);
+            throw new RuntimeError('Array already declared: ' + name);
         }
         this.arrays[name] = new Array(name, type, lower, upper);
     }
 
     define_type(name, body) {
         if (name in this.types) {
-            throw new Error('Type already declared: ' + name);
+            throw new RuntimeError('Type already declared: ' + name);
         }
         this.types[name] = new Type(name, body);
     }
 
     declare_typevar(name, type) {
         if (name in this.typevars) {
-            throw new Error('Type variable already declared: ' + name);
+            throw new RuntimeError('Type variable already declared: ' + name);
         }
         if (type in this.types) {
             this.typevars[name] = new TypeVar(name, this.types[type]);
@@ -53,7 +53,7 @@ class Environment {
 
     declare_typearr(name, type, lower, upper) {
         if (name in this.typearrays) {
-            throw new Error('Type array already declared: ' + name);
+            throw new RuntimeError('Type array already declared: ' + name);
         }
         this.typearrays[name] = new TypeArray(name, this.types[type], lower, upper);
     }
@@ -61,14 +61,14 @@ class Environment {
     // define function
     define_function(name, params, type, body) {
         if (name in this.functions) {
-            throw new Error('Function already declared: ' + name);
+            throw new RuntimeError('Function already declared: ' + name);
         }
         this.functions[name] = new Function(name, params, type, body);
     }
 
     define_procedure(name, params, body) {
         if (name in this.procedures) {
-            throw new Error('Procedure already declared: ' + name);
+            throw new RuntimeError('Procedure already declared: ' + name);
         }
         this.procedures[name] = new Procedure(name, params, body);
     }
@@ -81,7 +81,7 @@ class Environment {
             this.enclosing.set_variable(name, value);
         }
         else {
-            throw new Error("Use of undeclared Variable '" + name + "'");
+            throw new RuntimeError("Use of undeclared Variable '" + name + "'");
         }
     }
 
@@ -93,7 +93,7 @@ class Environment {
             this.enclosing.set_array(name, index, value);
         }
         else {
-            throw new Error("Use of undeclared Array '" + name + "'");
+            throw new RuntimeError("Use of undeclared Array '" + name + "'");
         }
     }
 
@@ -105,7 +105,7 @@ class Environment {
             this.enclosing.set_typevar(name, var_name, value);
         }
         else {
-            throw new Error("Use of undeclared Type Variable '" + name + "'");
+            throw new RuntimeError("Use of undeclared Type Variable '" + name + "'");
         }
     }
 
@@ -117,7 +117,7 @@ class Environment {
             this.enclosing.set_typearr(name, index, var_name, value);
         }
         else {
-            throw new Error("Use of undeclared Type Array '" + name + "'");
+            throw new RuntimeError("Use of undeclared Type Array '" + name + "'");
         }
     }
 
@@ -129,7 +129,7 @@ class Environment {
             return this.enclosing.get_variable(name);
         }
         else {
-            throw new Error("Use of undeclared Variable '" + name + "'");
+            throw new RuntimeError("Use of undeclared Variable '" + name + "'");
         }
     }
 
@@ -141,7 +141,7 @@ class Environment {
             return this.enclosing.get_array(name);
         }
         else {
-            throw new Error("Use of undeclared Array '" + name + "'");
+            throw new RuntimeError("Use of undeclared Array '" + name + "'");
         }
     }
 
@@ -153,7 +153,7 @@ class Environment {
             return this.enclosing.get_typevar(name, var_name);
         }
         else {
-            throw new Error("Use of undeclared Type Variable '" + name + "'");
+            throw new RuntimeError("Use of undeclared Type Variable '" + name + "'");
         }
     }
 
@@ -165,7 +165,7 @@ class Environment {
             return this.enclosing.get_typearr(name, index, var_name);
         }
         else {
-            throw new Error("Use of undeclared Type Array '" + name + "'");
+            throw new RuntimeError("Use of undeclared Type Array '" + name + "'");
         }
     }
 
@@ -177,7 +177,7 @@ class Environment {
             return this.enclosing.get_function(name);
         }
         else {
-            throw new Error("Use of undefined Function '" + name + "'");
+            throw new RuntimeError("Use of undefined Function '" + name + "'");
         }
     }
 
@@ -189,7 +189,7 @@ class Environment {
             return this.enclosing.get_procedure(name);
         }
         else {
-            throw new Error("Use of undefined Procedure '" + name + "'");
+            throw new RuntimeError("Use of undefined Procedure '" + name + "'");
         }
     }
 }

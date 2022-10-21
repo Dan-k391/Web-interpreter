@@ -1,4 +1,4 @@
-import { Error } from "./error.js";
+import { SyntaxError } from "./error.js";
 
 
 const WHITESPACE = /\s/;
@@ -89,7 +89,7 @@ class Scanner {
                 while (current < line.length) {
                     if (char == '.') {
                         if (dot) {
-                            throw new Error('Invalid number', this.current_line, current - value.length, current);
+                            throw new SyntaxError('Invalid number', this.current_line, current - value.length, current);
                         }
                         dot = true;
                     }
@@ -111,7 +111,7 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated string', this.current_line, current - value.length - 1, current);
+                    throw new SyntaxError('Unterminated string', this.current_line, current - value.length - 1, current);
                 }
                 else {
                     current++;
@@ -127,10 +127,10 @@ class Scanner {
                     char = line[++current];
                 }
                 if (current == line.length) {
-                    throw new Error('Unterminated char', this.current_line, current - value.length - 1, current);
+                    throw new SyntaxError('Unterminated char', this.current_line, current - value.length - 1, current);
                 }
                 else if (value.length > 1) {
-                    throw new Error('Char must be a single character', this.current_line, current - value.length - 1, current);
+                    throw new SyntaxError('Char must be a single character', this.current_line, current - value.length - 1, current);
                 }
                 else {
                     current++;
@@ -138,7 +138,7 @@ class Scanner {
                 }
             }
             else {
-                throw new Error('Unexpected character', this.current_line, current, current + 1);
+                throw new SyntaxError('Unexpected character', this.current_line, current, current + 1);
             }
         }
         return tokens;

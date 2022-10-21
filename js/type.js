@@ -1,7 +1,5 @@
 // TODO: Maybe support arrays in the future
-
-import { Error } from './error.js';
-
+// TODO: this should definitely by optimised
 
 class Type {
     constructor(ident, body) {

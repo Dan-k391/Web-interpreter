@@ -33,7 +33,7 @@ import {
     OutputAST,
     InputAST
 } from './ast.js';
-import { Error } from './error.js';
+import { SyntaxError } from './error.js';
 
 
 class Parser {
@@ -51,7 +51,7 @@ class Parser {
         let end_column = this.tokens[this.current]['end_column'];
         let value = this.tokens[this.current]['value'];
         let type = this.tokens[this.current]['type'];
-        throw new Error(msg + " (type '" + type + "', value: '" + value + "')", line, start_column, end_column);
+        throw new SyntaxError(msg + " (type '" + type + "', value: '" + value + "')", line, start_column, end_column);
     }
 
     parse() {
@@ -165,6 +165,8 @@ class Parser {
             return this.output();
         else if (next_type == 'input')
             return this.input();
+        else
+            this.report_error("Unexpected token: '" + next_type + "'");
     }
 
     parse_expr() {

@@ -3,6 +3,7 @@
 import { Scanner, all_keywords } from './scanner.js';
 import { Parser } from './parser.js';
 import { Environment } from './environment.js';
+import { SyntaxError, RuntimeError } from './error.js';
 import { example_code } from './examples.js';
 
 Vue.use(ELEMENT);
@@ -29,13 +30,13 @@ var app = new Vue({
         }
     },
     mounted() {
-        window.onbeforeunload = e => {
-            e = e || window.event
-            if (e) {
-                e.returnValue = '关闭提示'
-            }
-            return '关闭提示'
-        }
+        // window.onbeforeunload = e => {
+        //     e = e || window.event
+        //     if (e) {
+        //         e.returnValue = '关闭提示'
+        //     }
+        //     return '关闭提示'
+        // }
 
         require.config({ paths: { 'vs': 'https://cdn.bootcdn.net/ajax/libs/monaco-editor/0.23.0/min/vs' } });
         window.MonacoEnvironment = {
@@ -192,7 +193,9 @@ var app = new Vue({
                         // The object global_env is passed by reference
                         ast.evaluate(global_env);
                     } catch (e) {
-                        this.set_mark(e);
+                        if (e instanceof SyntaxError) {
+                            this.set_mark(e);
+                        }
                         this.report(e.toString());
                         return;
                     }
@@ -263,7 +266,6 @@ var app = new Vue({
             monaco.editor.setModelMarkers(this.editor.getModel(), 'pseudocode', this.markers);
         },
         report(err_msg) {
-            this.terminal.write('\x1b[31;1mError: \x1B[0m')
             this.terminal.writeln(err_msg);
             this.terminal.write(this.prefix);
         },

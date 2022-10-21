@@ -1,6 +1,6 @@
 import { Environment } from './environment.js';
 import { Variable } from './variable.js';
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 import { type_of } from './type.js';
 
 
@@ -43,7 +43,7 @@ class Function {
                 env.set_variable(param['id'], arg);
             }
             else {
-                throw new Error("Type mismatch in argument '" + param['id'] + "' of function '" + this.ident + "'");
+                throw new RuntimeError("Type mismatch in argument '" + param['id'] + "' of function '" + this.ident + "'");
             }
         }
         for (let node of this.body) {
@@ -56,14 +56,14 @@ class Function {
                     if (type_of(e.value) == this.type) {
                         return e.value;
                     }
-                    throw new Error("Type mismatch in return value of function: '" + this.ident + "'");
+                    throw new RuntimeError("Type mismatch in return value of function: '" + this.ident + "'");
                 }
                 else {
                     throw e;
                 }
             }
         }
-        throw new Error("Function '" + this.ident + "' does not return a value");
+        throw new RuntimeError("Function '" + this.ident + "' does not return a value");
     }
 }
 

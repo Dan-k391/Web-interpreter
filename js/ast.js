@@ -3,7 +3,7 @@
 // TODO: Change to stack 
 
 import { app } from './main.js';
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 import { Return } from './function.js';
 
 
@@ -448,7 +448,7 @@ class CallFuncExprAST {
         if (args.length == func.arity()) {
             return func.call(env, args);
         }
-        throw new Error("Function '" + this.ident + "' expects " + func.params.length + " arguments");
+        throw new RuntimeError("Function '" + this.ident + "' expects " + func.params.length + " arguments");
     }
 
     dump(prefix) {
@@ -476,7 +476,7 @@ class CallProcExprAST {
         if (args.length == proc.arity()) {
             return proc.call(env, args);
         }
-        throw new Error("Procedure '" + this.ident + "' expects " + proc.params.length + " arguments");
+        throw new RuntimeError("Procedure '" + this.ident + "' expects " + proc.params.length + " arguments");
     }
 
     dump(prefix) {
@@ -508,13 +508,13 @@ class UnaryExprAST {
                 }
             }
             else
-                throw new Error('Type mismatch in unary expression');
+                throw new RuntimeError('Type mismatch in unary expression');
         }
         else if (this.op == 'NOT') {
             if (typeof(value) == 'boolean')
                 return !value;
             else
-                throw new Error('Type mismatch in unary expression');
+                throw new RuntimeError('Type mismatch in unary expression');
         }
         return null;
     }
@@ -550,7 +550,7 @@ class BinaryExprAST {
                     return lhs / rhs;
             }
             else {
-                throw new Error('Type mismatch in binary expression');
+                throw new RuntimeError('Type mismatch in binary expression');
             }
         }
         else if (this.op == 'AND' || this.op == 'OR') {
@@ -561,7 +561,7 @@ class BinaryExprAST {
                     return lhs || rhs;
             }
             else {
-                throw new Error('Type mismatch in binary expression');
+                throw new RuntimeError('Type mismatch in binary expression');
             }
         }
         else if (this.op == '=' || this.op == '<>' || this.op == '<' || this.op == '<=' || this.op == '>' || this.op == '>=') {
@@ -580,7 +580,7 @@ class BinaryExprAST {
                     return lhs >= rhs;
             }
             else {
-                throw new Error('Type mismatch in binary expression');
+                throw new RuntimeError('Type mismatch in binary expression');
             }
         }
         else if (this.op == '&') {
@@ -588,10 +588,10 @@ class BinaryExprAST {
                 return lhs + rhs;
             }
             else {
-                throw new Error('Type mismatch in binary expression');
+                throw new RuntimeError('Type mismatch in binary expression');
             }
         }
-        throw new Error('Unknown binary operator');
+        throw new RuntimeError('Unknown binary operator');
     }
 
     dump(prefix) {
@@ -711,7 +711,7 @@ class InputAST {
         let value = prompt('Input value for ' + this.ident);
         if (value)
             env.set_variable(this.ident, value);
-        throw new Error('Cannot input a empty value');
+        throw new RuntimeError('Cannot input a empty value');
     }
     
     dump(prefix) {

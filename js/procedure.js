@@ -1,6 +1,6 @@
 import { Environment } from './environment.js';
 import { Variable } from './variable.js';
-import { Error } from './error.js';
+import { RuntimeError } from './error.js';
 import { Return } from './function.js';
 import { type_of } from './type.js';
 
@@ -37,7 +37,7 @@ class Procedure {
                 env.set_variable(param['id'], arg);
             }
             else
-                throw new Error("Type mismatch in argument '" + param['id'] + "' of procedure '" + this.ident + "'");
+                throw new RuntimeError("Type mismatch in argument '" + param['id'] + "' of procedure '" + this.ident + "'");
         }
         for (let node of this.body) {
             try {
@@ -46,7 +46,7 @@ class Procedure {
             }
             catch (e) {
                 if (e instanceof Return) {
-                    throw new Error("Procedure cannot contain return statement: '" + this.ident + "'");
+                    throw new RuntimeError("Procedure cannot contain return statement: '" + this.ident + "'");
                 }
                 else {
                     throw e;
