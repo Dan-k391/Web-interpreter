@@ -52,7 +52,7 @@ Below are some basic examples of the syntax of the language.
     ```
 
 ## Features to implement
-- [ ] Functions & Procedures
+- [x] Functions & Procedures
 - [ ] Struct & Pointer
 - [ ] Optimise the interpreter
 - [ ] File operations

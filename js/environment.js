@@ -138,7 +138,7 @@ class Environment {
             return this.arrays[name].get(index);
         }
         else if (this.enclosing != null) {
-            return this.enclosing.get_array(name);
+            return this.enclosing.get_array(name, index);
         }
         else {
             throw new RuntimeError("Use of undeclared Array '" + name + "'");

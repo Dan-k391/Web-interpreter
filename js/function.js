@@ -32,6 +32,7 @@ class Function {
      */
     call(g_env, args) {
         let env = new Environment(g_env);
+        console.log(this.ident, env);
         for (let i = 0; i < this.params.length; i++) {
             let param = this.params[i];
             let arg = args[i];

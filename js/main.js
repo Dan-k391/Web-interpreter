@@ -196,6 +196,7 @@ var app = new Vue({
                         if (e instanceof SyntaxError) {
                             this.set_mark(e);
                         }
+                        // the color is involved in toString()
                         this.report(e.toString());
                         return;
                     }

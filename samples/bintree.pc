@@ -1,0 +1,90 @@
+TYPE Node
+    DECLARE LeftPointer: INTEGER
+    DECLARE Data: STRING
+    DECLARE RightPointer: INTEGER
+ENDTYPE
+
+DECLARE Tree: ARRAY[0:9] OF Node
+
+DECLARE FreePointer: INTEGER
+DECLARE RootPointer: INTEGER
+
+PROCEDURE CreateTree()
+    DECLARE Index: INTEGER
+ 
+    FreePointer <- 0
+    RootPointer <- -1
+    FOR Index <- 0 TO 9 // link nodes
+        Tree[Index].LeftPointer <- Index + 1
+        Tree[Index].RightPointer <- -1
+    NEXT Index
+    Tree[9].LeftPointer <- -1
+ENDPROCEDURE
+
+PROCEDURE TransverseTree(Pointer: INTEGER)
+    // OUTPUT Pointer
+    IF Pointer <> -1 THEN
+        OUTPUT Tree[Pointer].Data
+        CALL TransverseTree(Tree[Pointer].LeftPointer)
+        CALL TransverseTree(Tree[Pointer].RightPointer)
+    ENDIF
+ENDPROCEDURE
+
+FUNCTION FindInsertionPoint(Item: STRING) RETURNS INTEGER
+    DECLARE CurrentPointer: INTEGER
+    DECLARE PreviousPointer: INTEGER
+    DECLARE Direction: INTEGER
+    Direction <- 1
+
+    CurrentPointer <- RootPointer
+    PreviousPointer <- CurrentPointer
+
+    WHILE CurrentPointer <> -1
+        PreviousPointer <- CurrentPointer
+        IF Item < Tree[CurrentPointer].Data THEN
+            CurrentPointer <- Tree[CurrentPointer].LeftPointer
+            Direction <- 1
+        ELSE
+            CurrentPointer <- Tree[CurrentPointer].RightPointer
+            Direction <- -1
+        ENDIF
+    ENDWHILE
+
+    RETURN Direction * PreviousPointer
+ENDFUNCTION
+
+PROCEDURE AddToTree(NewDataItem: STRING)
+    DECLARE Index: INTEGER
+    DECLARE InsertPoint: INTEGER
+
+    IF FreePointer = -1 THEN
+        OUTPUT "No free space left"
+    ELSE // add new data item to the first node in the free list
+        DECLARE NewNodePointer: INTEGER
+        NewNodePointer <- FreePointer
+        Tree[NewNodePointer].Data <- NewDataItem
+        // adjust free pointer
+        FreePointer <- Tree[FreePointer].LeftPointer
+        // clear left pointer
+        Tree[NewNodePointer].LeftPointer <- -1
+        // is tree currently empty?
+        IF RootPointer = -1 THEN // make new node the root node
+            RootPointer <- NewNodePointer
+        ELSE // find position where the new node is to be added
+            Index <- RootPointer
+            InsertPoint <- FindInsertionPoint(NewDataItem)
+            IF InsertPoint > 0 THEN // add new node on left
+                Tree[InsertPoint].LeftPointer <- NewNodePointer
+            ELSE // add new node on right
+                OUTPUT -InsertPoint
+                Tree[-InsertPoint].RightPointer <- NewNodePointer
+            ENDIF
+        ENDIF
+    ENDIF
+ENDPROCEDURE
+
+CALL CreateTree()
+CALL AddToTree("B")
+CALL AddToTree("C")
+CALL AddToTree("A")
+CALL TransverseTree(RootPointer)
