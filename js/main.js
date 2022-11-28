@@ -182,6 +182,7 @@ var app = new Vue({
                     this.report(e.toString());
                     return;
                 }
+                console.log(ast);
                 if (ast != null) {
                     // this.terminal.writeln('Parsing completed');
                     this.dumpast ? ast.dump('') : null;

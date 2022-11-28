@@ -19,7 +19,8 @@ class ProgramAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ProgramAST');
+        app.terminal.writeln('');
+        app.terminal.writeln(prefix + '\x1b[36;1mProgramAST\x1b[0m');
         for (let node of this.body) {
             node.dump(prefix + '  ');
         }
@@ -49,7 +50,7 @@ class FuncDefAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'FuncDefAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[31;1mFuncDefAST\x1b[0m: ' + this.ident);
         for (let param of this.params) {
             param.dump(prefix + '  ');
         }
@@ -71,7 +72,7 @@ class ProcDefAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ProcDefAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[31;1mProcDefAST\x1b[0m: ' + this.ident);
         for (let param of this.params) {
             param.dump(prefix + '  ');
         }
@@ -93,7 +94,7 @@ class ReturnAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ReturnAST');
+        app.terminal.writeln(prefix + '\x1b[31;1mReturnAST\x1b[0m');
         this.expr.dump(prefix + '  ');
     }
 }
@@ -110,7 +111,7 @@ class VarDeclAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'VarDeclAST ' + this.ident + ' ' + this.type);
+        app.terminal.writeln(prefix + '\x1b[31;1mVarDeclAST\x1b[0m ' + this.ident + ': ' + this.type);
         
     }
 }
@@ -132,8 +133,7 @@ class ArrDeclAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ArrayDeclAST ' + this.ident + ' ' + this.type + ' ' + this.lower + '-' + this.upper);
-        
+        app.terminal.writeln(prefix + '\x1b[31;1mArrDeclAST\x1b[0m ' + this.ident + ': ' + this.type + '[' + this.lower + '-' + this.upper + ']');
     }
 }
 
@@ -149,7 +149,7 @@ class TypeDefAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'TypeDefAST ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[31;1mFuncDefAST\x1b[0m ' + this.ident);
         for (let node of this.body) {
             node.dump(prefix + '  ');
         }
@@ -168,7 +168,7 @@ class TypeVarDeclAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'TypeVarDeclAST ' + this.ident + ' ' + this.type);
+        app.terminal.writeln(prefix + '\x1b[31;1mTypeVarDeclAST\x1b[0m ' + this.ident + ' ' + this.type);
     }
 }
 
@@ -203,7 +203,7 @@ class VarAssignAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'VarAssignAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[31;1mVarAssignAST\x1b[0m ' + this.ident);
         this.expr.dump(prefix + '  ');
     }
 }
@@ -223,7 +223,7 @@ class ArrAssignAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ArrAssignAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[31;1mArrAssignAST\x1b[0m ' + this.ident);
         this.index.dump(prefix + '  ');
         this.expr.dump(prefix + '  ');
     }
@@ -290,7 +290,7 @@ class IfAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'IfAST');
+        app.terminal.writeln(prefix + '\x1b[31;1mIfAST\x1b[0m');
         this.condition.dump(prefix + '  ');
         for (let node of this.body) {
             node.dump(prefix + '  ');
@@ -323,7 +323,7 @@ class WhileAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'WhileAST');
+        app.terminal.writeln(prefix + '\x1b[31;1mWhileAST\x1b[0m');
         this.condition.dump(prefix + '  ');
         for (let node of this.body) {
             node.dump(prefix + '  ');
@@ -359,7 +359,7 @@ class ForAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ForAST');
+        app.terminal.writeln(prefix + '\x1b[31;1mForAST\x1b[0m');
         app.terminal.writeln(prefix + '  ' + this.ident + ' = ' + this.start.evaluate(env) + ' to ' + this.end.evaluate(env) + ' step ' + this.step.evaluate(env));
         for (let node of this.body) {
             node.dump(prefix + '  ');
@@ -377,7 +377,7 @@ class VarExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'VarExprAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[33;1mVarExprAST\x1b[0m: ' + this.ident);
     }
 }
 
@@ -393,7 +393,7 @@ class ArrExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'ArrExprAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[33;1mArrExprAST\x1b[0m: ' + this.ident);
         this.index.dump(prefix + '  ');
     }
 }
@@ -452,7 +452,7 @@ class CallFuncExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'CallFuncExprAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[33;1mCallFuncExprAST\x1b[0m: ' + this.ident);
         for (let arg of this.args) {
             arg.dump(prefix + '  ');
         }
@@ -480,7 +480,7 @@ class CallProcExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'CallExprAST: ' + this.ident);
+        app.terminal.writeln(prefix + '\x1b[33;1mCallProcExprAST\x1b[0m: ' + this.ident);
         for (let arg of this.args) {
             arg.dump(prefix + '  ');
         }
@@ -520,7 +520,7 @@ class UnaryExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'UnaryExprAST: ' + this.op);
+        app.terminal.writeln(prefix + '\x1b[33;1mUnaryExprAST\x1b[0m: : ' + this.op);
         this.expr.dump(prefix + '  ');
         
     }
@@ -595,7 +595,7 @@ class BinaryExprAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'BinaryExprAST: ' + this.op);
+        app.terminal.writeln(prefix + '\x1b[33;1mBinaryExprAST\x1b[0m: : ' + this.op);
         this.lhs.dump(prefix + '  ');
         this.rhs.dump(prefix + '  ');
         
@@ -640,8 +640,7 @@ class NumberAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'NumberAST: ' + this.value.toString());
-        
+        app.terminal.writeln(prefix + '\x1b[33;1mNumberAST\x1b[0m: ' + this.value.toString());
     }
 }
 
@@ -655,7 +654,7 @@ class StringAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'StringAST: ' + this.value);
+        app.terminal.writeln(prefix + '\x1b[33;1mStringAST\x1b[0m: : ' + this.value);
         
     }
 }
@@ -673,7 +672,7 @@ class BoolAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'BoolAST: ' + this.value);
+        app.terminal.writeln(prefix + '\x1b[33;1mBoolAST\x1b[0m: ' + this.value);
         
     }
 }
@@ -695,9 +694,10 @@ class OutputAST {
     }
 
     dump(prefix) {
-        app.terminal.writeln(prefix + 'OutputAST');
-        this.expr.dump(prefix + '  ');
-        
+        app.terminal.writeln(prefix + '\x1b[31;1mOutputAST\x1b[0m');
+        for (let expr of this.exprs) {
+            expr.dump(prefix + '  ');
+        }
     }
 }
 
